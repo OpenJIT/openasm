@@ -24,7 +24,7 @@ test: $(TEST)
 	LD_LIBRARY_PATH=. ./$(TEST)
 
 $(TEST): $(TESTSRC) $(BIN)
-	$(CC) -o $@ $(TESTSRC) $(LDFLAGS) -L. -lopenasm
+	$(CC) -o $@ $(CFLAGS) $(TESTSRC) $(LDFLAGS) -L. -lopenasm
 
 $(BIN): $(OBJ) $(INC)
 	$(CC) -shared -o $(BIN) $(OBJ) $(LDFLAGS)

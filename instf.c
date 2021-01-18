@@ -15,7 +15,9 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
 
     while (*fmt && *fmt != ' ') ++fmt;
 
-    strncpy(mnemonic, ptr, fmt - ptr);
+    size_t len = fmt - ptr;
+    strncpy(mnemonic, ptr, len);
+    mnemonic[len] = 0;
     
     while (*fmt == ' ' || *fmt == '\t') ++fmt;
     ptr = fmt;
