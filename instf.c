@@ -29,6 +29,9 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
             if (*fmt == '%') {
                 ++fmt;
                 switch (*fmt) {
+                case '*': {
+                    operands[i] = va_arg(args, struct OpenasmOperand);
+                } break;
                 case 'r': {
                     const char *target = va_arg(args, char *);
                     uint32_t tag = -1;
