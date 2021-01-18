@@ -1,0 +1,6 @@
+*.o
+/run_test
+/libopenasm.so
+*~
+.#*
+#*#
