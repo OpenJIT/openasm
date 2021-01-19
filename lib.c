@@ -221,6 +221,122 @@ int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end) {
     return 0;
 }
 
+/* unused */
+void openasm_set_imm(uint8_t *inst, int bits, uint64_t imm) {
+    int has_legacy_prefix = *inst == OPENASM_PREFIX1_LOCK
+        || *inst == OPENASM_PREFIX1_REPNZ
+        || *inst == OPENASM_PREFIX1_REPZ
+        || *inst == OPENASM_PREFIX1_REP
+        || *inst == OPENASM_PREFIX2_CS_OR
+        || *inst == OPENASM_PREFIX2_SS_OR
+        || *inst == OPENASM_PREFIX2_DS_OR
+        || *inst == OPENASM_PREFIX2_ES_OR
+        || *inst == OPENASM_PREFIX2_FS_OR
+        || *inst == OPENASM_PREFIX2_GS_OR
+        || *inst == OPENASM_PREFIX2_BR_NT
+        || *inst == OPENASM_PREFIX2_BR_T
+        || *inst == OPENASM_PREFIX3_OP_SIZE
+        || *inst == OPENASM_PREFIX4_ADDR_SIZE;
+    if (has_legacy_prefix) {
+        ++inst;
+    }
+
+    int has_rex_prefix = (*inst & 0xf0) != 0;
+    if (has_rex_prefix) {
+        ++inst;
+    }
+
+    int has_op2_escape = *inst == OPENASM_OPCODE2_ESCAPE;
+    int has_op3a_escape = 0;
+    int has_op3b_escape = 0;
+
+    if (has_op2_escape) {
+        ++inst;
+    
+        has_op3a_escape = *inst == OPENASM_OPCODE3_ESCAPE1;
+        has_op3b_escape = *inst == OPENASM_OPCODE3_ESCAPE2;
+    
+        if (has_op3a_escape || has_op3b_escape) {
+            ++inst;
+        }
+    }
+
+    uint8_t opcode = *inst;
+
+    // opcode
+    ++inst;
+
+    int has_modrm = 0;
+    int has_imm = 0;
+
+    if (has_op3a_escape) {
+        if (openasm_properties3a[opcode].modrm) {
+            has_modrm = 1;
+        }
+        has_imm = openasm_properties3a[opcode].imm;
+    } else if (has_op3b_escape) {
+        if (openasm_properties3b[opcode].modrm) {
+            has_modrm = 1;
+        }
+        has_imm = openasm_properties3b[opcode].imm;
+    } else if (has_op2_escape) {
+        if (openasm_properties2[opcode].modrm) {
+            has_modrm = 1;
+        }
+        has_imm = openasm_properties2[opcode].imm;
+    } else {
+        if (openasm_properties1[opcode].modrm) {
+            has_modrm = 1;
+        }
+        has_imm = openasm_properties1[opcode].imm;
+    }
+
+    if (has_modrm) {
+        uint8_t modrm = *inst;
+        uint8_t a = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB, 0, OPENASM_MODRM_RM_EA_SIB);
+        uint8_t b = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB_DISP8, 0, OPENASM_MODRM_RM_EA_SIB);
+        uint8_t c = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB_DISP32, 0, OPENASM_MODRM_RM_EA_SIB);
+        // isb
+        int has_sib = (modrm & ~OPENASM_MODRM_REGMASK) == a
+            || (modrm & ~OPENASM_MODRM_REGMASK) == b
+            || (modrm & ~OPENASM_MODRM_REGMASK) == c;
+        if (has_sib) {
+            ++inst;
+        }
+        uint8_t d = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_DISP32, 0, OPENASM_MODRM_RM_EA_DISP32);
+        uint8_t e = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM_DISP8, 0, 0);
+        uint8_t f = OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM_DISP32, 0, 0);
+        int has_disp8 = (modrm & OPENASM_MODRM_MODMASK) == e;
+        int has_disp32 = (modrm & OPENASM_MODRM_MODMASK) == f
+            || (modrm & ~OPENASM_MODRM_REGMASK) == d;
+        if (has_disp8) {
+            ++inst;
+        } else if (has_disp32) {
+            inst += 4;
+        }
+    }
+
+    if (has_imm == bits) {
+        switch (bits) {
+        case 8:
+            *inst = imm & 0xff;
+            break;
+        case 16:
+            *((uint16_t *) inst) = imm & 0xffff;
+            break;
+        case 32:
+            *((uint32_t *) inst) = imm & 0xffffffff;
+            break;
+        case 64:
+            *((uint64_t *) inst) = imm;
+            break;
+        default:
+            /* unreachable */
+            break;
+        }
+    }
+}
+
 int openasm_addlike_al_imm8(OpenasmBuffer *buf, OpenasmOperand *args, uint32_t opcode, uint32_t regval) {
     (void) regval;
     uint8_t *start = openasm_new(buf);
@@ -1776,41 +1892,41 @@ struct OpenasmRegister openasm_register[] = {
     { 0 },
 };
 
-OpenasmProperty openasm_properties[] = {
+OpenasmProperty openasm_properties1[] = {
     // [0x00; 0x07]
-    { "add", 1, 0, 1, 0, 0, 0 },
-    { "add", 1, 0, 1, 0, 0, 0 },
-    { "add", 1, 0, 1, 0, 0, 0 },
-    { "add", 1, 0, 1, 0, 0, 0 },
-    { "add", 1, 0, 1, 0, 0, 1 },
-    { "add", 1, 0, 1, 0, 0, 1 },
-    { "push", 1, 0, 0, 0, 0, 0 },
-    { "pop", 1, 0, 0, 0, 0, 0 },
+    { "add", 1, 0, 1, 0 },
+    { "add", 1, 0, 1, 0 },
+    { "add", 1, 0, 1, 0 },
+    { "add", 1, 0, 1, 0 },
+    { "add", 1, 0, 1, 1 },
+    { "add", 1, 0, 1, 1 },
+    { "push", 1, 0, 0, 0 },
+    { "pop", 1, 0, 0, 0 },
     // [0x08; 0x0f]
-    { "adc", 1, 0, 1, 0, 0, 0 },
-    { "adc", 1, 0, 1, 0, 0, 0 },
-    { "adc", 1, 0, 1, 0, 0, 0 },
-    { "adc", 1, 0, 1, 0, 0, 0 },
-    { "adc", 1, 0, 1, 0, 0, 1 },
-    { "adc", 1, 0, 1, 0, 0, 1 },
-    { "push", 1, 0, 0, 0, 0, 0 },
-    { "pop", 1, 0, 0, 0, 0, 0 },
+    { "adc", 1, 0, 1, 0 },
+    { "adc", 1, 0, 1, 0 },
+    { "adc", 1, 0, 1, 0 },
+    { "adc", 1, 0, 1, 0 },
+    { "adc", 1, 0, 1, 1 },
+    { "adc", 1, 0, 1, 1 },
+    { "push", 1, 0, 0, 0 },
+    { "pop", 1, 0, 0, 0 },
     // [0x10; 0x17]
-    { "and", 1, 0, 1, 0, 0, 0 },
-    { "and", 1, 0, 1, 0, 0, 0 },
-    { "and", 1, 0, 1, 0, 0, 0 },
-    { "and", 1, 0, 1, 0, 0, 0 },
-    { "and", 1, 0, 1, 0, 0, 1 },
-    { "and", 1, 0, 1, 0, 0, 1 },
+    { "and", 1, 0, 1, 0 },
+    { "and", 1, 0, 1, 0 },
+    { "and", 1, 0, 1, 0 },
+    { "and", 1, 0, 1, 0 },
+    { "and", 1, 0, 1, 1 },
+    { "and", 1, 0, 1, 1 },
     { 0 },
-    { "daa", 1, 0, 0, 0, 0, 0 },
+    { "daa", 1, 0, 0, 0 },
     // [0x18; 0x1f]
-    { "xor", 1, 0, 1, 0, 0, 0 },
-    { "xor", 1, 0, 1, 0, 0, 0 },
-    { "xor", 1, 0, 1, 0, 0, 0 },
-    { "xor", 1, 0, 1, 0, 0, 0 },
-    { "xor", 1, 0, 1, 0, 0, 1 },
-    { "xor", 1, 0, 1, 0, 0, 1 },
+    { "xor", 1, 0, 1, 0 },
+    { "xor", 1, 0, 1, 0 },
+    { "xor", 1, 0, 1, 0 },
+    { "xor", 1, 0, 1, 0 },
+    { "xor", 1, 0, 1, 1 },
+    { "xor", 1, 0, 1, 1 },
     { 0 },
-    { "aaa", 1, 0, 0, 0, 0, 0 },
+    { "aaa", 1, 0, 0, 0 },
 };

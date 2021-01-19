@@ -54,10 +54,6 @@ struct OpenasmProperty {
     int escape;
     // does this opcode require a ModR/M?
     int modrm;
-    // does this opcode require an SIB?
-    int sib;
-    // does this opcode have a displacement?
-    int disp;
     // does this opcode have an immediate value?
     int imm;
 };
@@ -207,6 +203,9 @@ struct OpenasmRegister {
 #define OPENASM_MODRM_RM_EA_SIB 0x4
 #define OPENASM_MODRM_RM_EA_DISP32 0x5
 #define OPENASM_MODRM(mod, reg, rm) (((mod & 0x3) << 6) | ((reg & 0x7) << 3) | (rm & 0x7))
+#define OPENASM_MODRM_MODMASK (0x3 << 6)
+#define OPENASM_MODRM_REGMASK (0x7 << 3)
+#define OPENASM_MODRM_RMMASK 0x7
 #define OPENASM_SCALE_1 0x0
 #define OPENASM_SCALE_2 0x1
 #define OPENASM_SCALE_4 0x2
@@ -225,6 +224,8 @@ struct OpenasmRegister {
 #define OPENASM_OPCODE2_66H(op2) ((OPENASM_OPCODE2(op2) << 8) | 0x66)
 #define OPENASM_OPCODE2_F2H(op2) ((OPENASM_OPCODE2(op2) << 8) | 0xf2)
 #define OPENASM_OPCODE2_F3H(op2) ((OPENASM_OPCODE2(op2) << 8) | 0xf3)
+#define OPENASM_OPCODE3_ESCAPE1 0x38
+#define OPENASM_OPCODE3_ESCAPE2 0x3a
 #define OPENASM_OPCODE3(op2, op3) ((op3 << 16) | (op2 << 8) | OPENASM_OPCODE2_ESCAPE)
 #define OPENASM_OPCODE3_66H(op2, op3) ((OPENASM_OPCODE3(op2, op3) << 8) | 0x66)
 #define OPENASM_OPCODE3_F2H(op2, op3) ((OPENASM_OPCODE3(op2, op3) << 8) | 0xf2)
@@ -398,7 +399,10 @@ OpenasmFnf openasm_jit_fnf(OpenasmBuffer *buf);
 OpenasmFnd openasm_jit_fnd(OpenasmBuffer *buf);
 OpenasmFnvp openasm_jit_fnvp(OpenasmBuffer *buf);
 
-extern OpenasmProperty openasm_properties[];
+extern OpenasmProperty openasm_properties1[];
+extern OpenasmProperty openasm_properties2[];
+extern OpenasmProperty openasm_properties3a[];
+extern OpenasmProperty openasm_properties3b[];
 extern struct OpenasmEntry openasm_inst[];
 extern struct OpenasmRegister openasm_register[];
 
