@@ -52,6 +52,7 @@ struct OpenasmSymbol {
     int bits;
     size_t offset;
     uint64_t addr;
+    int rel;
 };
 
 struct OpenasmSymbolTable {
@@ -408,6 +409,9 @@ struct OpenasmRegister {
 #define OPENASM_PUSH_IMM8 0x6a
 #define OPENASM_PUSH_IMM32 0x68
 
+#define OPENASM_CALL_REL32 0xe8
+#define OPENASM_SYSCALL 0x05 /* requires 0fh escape */
+
 #define OPENASM_RET_NEAR 0xc3
 #define OPENASM_RET_FAR 0xcb
 
@@ -418,8 +422,9 @@ uint8_t *openasm_new(OpenasmBuffer *buf);
 uint8_t *openasm_legacy_prefix(OpenasmBuffer *buf, uint8_t *ptr, uint8_t prefix);
 uint8_t *openasm_rex_prefix(OpenasmBuffer *buf, uint8_t *ptr, uint8_t prefix);
 uint8_t *openasm_opcode1(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op);
-uint8_t *openasm_opcode2(OpenasmBuffer *buf, uint8_t *ptr, uint16_t op);
-uint8_t *openasm_opcode3(OpenasmBuffer *buf, uint8_t *ptr, uint32_t op);
+uint8_t *openasm_opcode2(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op);
+uint8_t *openasm_opcode3a(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op);
+uint8_t *openasm_opcode3b(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op);
 uint8_t *openasm_modrm(OpenasmBuffer *buf, uint8_t *ptr, uint8_t modrm);
 uint8_t *openasm_sib(OpenasmBuffer *buf, uint8_t *ptr, uint8_t sib);
 uint8_t *openasm_disp8(OpenasmBuffer *buf, uint8_t *ptr, uint8_t disp);
@@ -437,6 +442,8 @@ uint64_t openasm_res(OpenasmBuffer *buf, size_t len);
 
 void openasm_section(OpenasmBuffer *buf, const char *section);
     
+uint64_t openasm_addr_of(OpenasmBuffer *buf, uint8_t *inst);
+uint64_t openasm_current_addr(OpenasmBuffer *buf);
 // `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
 // Must be used after all uses of the symbol were emitted, or it will otherwise create
 // erroneous results.

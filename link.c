@@ -24,6 +24,14 @@ void openasm_section(OpenasmBuffer *buf, const char *section) {
     buf->section = buf->len++;
 }
 
+uint64_t openasm_addr_of(OpenasmBuffer *buf, uint8_t *inst) {
+    return inst - buf->sections[buf->section].buffer;
+}
+
+uint64_t openasm_current_addr(OpenasmBuffer *buf) {
+    return buf->sections[buf->section].len;
+}
+
 bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr) {
     bool used = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
@@ -46,8 +54,13 @@ int openasm_link(OpenasmBuffer *buf) {
             continue;
         }
         openasm_section(buf, buf->symtable.table[i].src_section);
+        int rel = buf->symtable.table[i].rel;
+        size_t size = buf->symtable.table[i].bits >> 3;
         uint64_t offset = buf->symtable.table[i].offset;
         uint64_t addr = buf->symtable.table[i].addr;
+        if (rel) {
+            addr = addr - (offset + size);
+        }
         uint8_t *ptr = buf->sections[buf->section].buffer + offset;
         switch (buf->symtable.table[i].bits) {
         case 8:

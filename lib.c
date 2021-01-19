@@ -107,25 +107,37 @@ uint8_t *openasm_opcode1(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op) {
     return ptr + 1;
 }
 
-uint8_t *openasm_opcode2(OpenasmBuffer *buf, uint8_t *ptr, uint16_t op) {
+uint8_t *openasm_opcode2(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op) {
     openasm_assert(!buf->has_opcode);
 
     buf->has_opcode = 2;
     buf->size += 2;
-    ptr[0] = op & 0xff;
-    ptr[1] = (op >> 8) & 0xff;
+    ptr[0] = OPENASM_OPCODE2_ESCAPE;
+    ptr[1] = op;
 
     return ptr + 2;
 }
 
-uint8_t *openasm_opcode3(OpenasmBuffer *buf, uint8_t *ptr, uint32_t op) {
+uint8_t *openasm_opcode3a(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op) {
     openasm_assert(!buf->has_opcode);
 
     buf->has_opcode = 3;
     buf->size += 3;
-    ptr[0] = op & 0xff;
-    ptr[1] = (op >> 8) & 0xff;
-    ptr[2] = (op >> 16) & 0xff;
+    ptr[0] = OPENASM_OPCODE2_ESCAPE;
+    ptr[1] = OPENASM_OPCODE3_ESCAPE1;
+    ptr[2] = op;
+
+    return ptr + 3;
+}
+
+uint8_t *openasm_opcode3b(OpenasmBuffer *buf, uint8_t *ptr, uint8_t op) {
+    openasm_assert(!buf->has_opcode);
+
+    buf->has_opcode = 3;
+    buf->size += 3;
+    ptr[0] = OPENASM_OPCODE2_ESCAPE;
+    ptr[1] = OPENASM_OPCODE3_ESCAPE2;
+    ptr[2] = op;
 
     return ptr + 3;
 }
@@ -1757,6 +1769,27 @@ int openasm_push_imm32(OpenasmBuffer *buf, OpenasmOperand *args) {
     return openasm_build(buf, start, inst);
 }
 
+int openasm_call_rel32(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode1(buf, inst, OPENASM_CALL_REL32);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_syscall(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_SYSCALL);
+    
+    return openasm_build(buf, start, inst);
+}
+
 // TODO: near/far modifier
 int openasm_ret(OpenasmBuffer *buf, OpenasmOperand *args) {
     (void) args;
@@ -1879,6 +1912,14 @@ static int (*openasm_inst_push[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_push_imm32,
 };
 
+static int (*openasm_inst_call[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_call_rel32,
+};
+
+static int (*openasm_inst_syscall[])(OpenasmBuffer *, OpenasmOperand *) = {
+    openasm_syscall,
+};
+
 static int (*openasm_inst_ret[])(OpenasmBuffer *, OpenasmOperand *) = {
     openasm_ret,
 };
@@ -1893,6 +1934,8 @@ struct OpenasmEntry openasm_inst[] = {
     { "mov", openasm_inst_mov },
     { "pop", openasm_inst_pop },
     { "push", openasm_inst_push },
+    { "call", openasm_inst_call },
+    { "syscall", openasm_inst_syscall },
     { "ret", openasm_inst_ret },
     { 0 },
 };

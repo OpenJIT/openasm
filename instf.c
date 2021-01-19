@@ -117,7 +117,8 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     buf->symtable.table[buf->symtable.len].defined = 0;
                     buf->symtable.table[buf->symtable.len].bits = 0;
                     buf->symtable.table[buf->symtable.len].offset = 0;
-                    buf->symtable.table[buf->symtable.len++].addr = 0;
+                    buf->symtable.table[buf->symtable.len].addr = 0;
+                    buf->symtable.table[buf->symtable.len++].rel = 0;
                     operands[i].imm = 0;
                     if (fmt[1] == '1') {
                         ++fmt;
@@ -150,6 +151,27 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                         fprintf(stderr, "warning: unspecified symbol bitwidth, defaulting to 64\n");
                         operands[i].tag = OPENASM_OP_IMM64;
                     }
+                } break;
+                case 'p': {
+                    if (buf->symtable.len == buf->symtable.cap) {
+                        buf->symtable.cap *= 2;
+                        buf->symtable.table = realloc(buf->symtable.table, buf->symtable.cap * sizeof(struct OpenasmSymbol));
+                    }
+                    
+                    const char *src_section = buf->sections[buf->section].name;
+                    const char *addr_section = va_arg(args, char *);
+                    const char *symbol = va_arg(args, char *);
+                    buf->sym = 1;
+                    buf->symtable.table[buf->symtable.len].src_section = src_section;
+                    buf->symtable.table[buf->symtable.len].addr_section = addr_section;
+                    buf->symtable.table[buf->symtable.len].sym = symbol;
+                    buf->symtable.table[buf->symtable.len].defined = 0;
+                    buf->symtable.table[buf->symtable.len].bits = 0;
+                    buf->symtable.table[buf->symtable.len].offset = 0;
+                    buf->symtable.table[buf->symtable.len].addr = 0;
+                    buf->symtable.table[buf->symtable.len++].rel = 1;
+                    operands[i].imm = 0;
+                    operands[i].tag = OPENASM_OP_IMM32;
                 } break;
                 default: {
                     fprintf(stderr, "error: invalid `openasm_instf` parameter: '%c'\n", *fmt);
