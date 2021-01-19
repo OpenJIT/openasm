@@ -27,7 +27,7 @@ void openasm_section(OpenasmBuffer *buf, const char *section) {
 bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr) {
     bool used = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
-        if (strcmp(buf->symtable.table[i].section, section) == 0
+        if (strcmp(buf->symtable.table[i].addr_section, section) == 0
             && strcmp(buf->symtable.table[i].sym, sym) == 0) {
             used = 1;
             buf->symtable.table[i].addr = addr;

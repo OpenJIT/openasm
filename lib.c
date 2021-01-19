@@ -44,8 +44,8 @@ uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr) {
         buf->sections[buf->section].buffer = realloc(buf->sections[buf->section].buffer, buf->sections[buf->section].cap);
     }
 
-    void *buffer = buf->sections[buf->section].buffer;
-    void *dest = buffer + buf->sections[buf->section].len;
+    uint8_t *buffer = buf->sections[buf->section].buffer;
+    uint8_t *dest = buffer + buf->sections[buf->section].len;
     memcpy(dest, ptr, len);
     buf->sections[buf->section].len += len;
     
@@ -58,8 +58,8 @@ uint64_t openasm_res(OpenasmBuffer *buf, size_t len) {
         buf->sections[buf->section].buffer = realloc(buf->sections[buf->section].buffer, buf->sections[buf->section].cap);
     }
 
-    void *buffer = buf->sections[buf->section].buffer;
-    void *dest = buffer + buf->sections[buf->section].len;
+    uint8_t *buffer = buf->sections[buf->section].buffer;
+    uint8_t *dest = buffer + buf->sections[buf->section].len;
     memset(dest, 0, len);
     buf->sections[buf->section].len += len;
     
