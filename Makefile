@@ -6,8 +6,8 @@ BIN:=libopenasm.so
 TEST:=run_test
 
 TESTSRC:=test.c
-SRC:=lib.c jit.c instf.c
-OBJ:=lib.o jit.o instf.o
+SRC:=lib.c jit.c instf.c link.c
+OBJ:=lib.o jit.o instf.o link.o
 INC:=$(INCDIR)/openasm.h
 
 CFLAGS:=-g -ggdb -Wall -Wextra -pedantic -std=c11 -D_GNU_SOURCE=1 -fPIC

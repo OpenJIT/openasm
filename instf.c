@@ -4,7 +4,7 @@
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    
+
     const char *input = fmt;
     
     while (*fmt == ' ' || *fmt == '\t') ++fmt;
@@ -100,6 +100,52 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     struct OpenasmMemory mem = va_arg(args, struct OpenasmMemory);
                     operands[i].tag = OPENASM_OP_MEMORY;
                     operands[i].mem = mem;
+                } break;
+                case 's': {
+                    if (buf->symtable.len == buf->symtable.cap) {
+                        buf->symtable.cap *= 2;
+                        buf->symtable.table = realloc(buf->symtable.table, buf->symtable.cap * sizeof(struct OpenasmSymbol));
+                    }
+                    
+                    const char *symbol = va_arg(args, char *);
+                    buf->sym = 1;
+                    buf->symtable.table[buf->symtable.len].sym = symbol;
+                    buf->symtable.table[buf->symtable.len].defined = 0;
+                    buf->symtable.table[buf->symtable.len].bits = 0;
+                    buf->symtable.table[buf->symtable.len].offset = 0;
+                    buf->symtable.table[buf->symtable.len++].addr = 0;
+                    operands[i].imm = 0;
+                    if (fmt[1] == '1') {
+                        ++fmt;
+                        if (fmt[1] != '6') {
+                            fprintf(stderr, "error: invalid symbol bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[i].tag = OPENASM_OP_IMM16;
+                    } else if (fmt[1] == '3') {
+                        ++fmt;
+                        if (fmt[1] != '2') {
+                            fprintf(stderr, "error: invalid symbol bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[i].tag = OPENASM_OP_IMM32;
+                    } else if (fmt[1] == '6') {
+                        ++fmt;
+                        if (fmt[1] != '4') {
+                            fprintf(stderr, "error: invalid symbol bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[i].tag = OPENASM_OP_IMM64;
+                    } else if (fmt[1] >= '0' && fmt[1] <= '9') {
+                        fprintf(stderr, "error: invalid symbol bitwidth\n");
+                        return 1;
+                    } else {
+                        fprintf(stderr, "warning: unspecified symbol bitwidth, defaulting to 64\n");
+                        operands[i].tag = OPENASM_OP_IMM64;
+                    }
                 } break;
                 default: {
                     fprintf(stderr, "error: invalid `openasm_instf` parameter: '%c'\n", *fmt);

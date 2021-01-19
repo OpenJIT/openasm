@@ -30,11 +30,28 @@ typedef float (*OpenasmFnf)();
 typedef double (*OpenasmFnd)();
 typedef void *(*OpenasmFnvp)();
 
+struct OpenasmSymbol {
+    const char *sym;
+    int defined;
+    int bits;
+    size_t offset;
+    uint64_t addr;
+};
+
+struct OpenasmSymbolTable {
+    size_t len;
+    size_t cap;
+    struct OpenasmSymbol *table;
+};
+
 struct OpenasmBuffer {
     size_t len;
     size_t cap;
     uint8_t *buffer;
 
+    int sym;
+    struct OpenasmSymbolTable symtable;
+    
     int has_legacy_prefix;
     int has_rex_prefix;
     int has_opcode;
@@ -390,6 +407,13 @@ uint8_t *openasm_imm64(OpenasmBuffer *buf, uint8_t *ptr, uint64_t imm);
 int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end);
 
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...);
+
+// `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
+// Must be used after all uses of the symbol were emitted, or it will otherwise create
+// erroneous results.
+bool openasm_symbol(OpenasmBuffer *buf, const char *sym, uint64_t addr);
+// Returns 1 if some symbol was not defined, but only emits a warning if one wasn't.
+int openasm_link(OpenasmBuffer *buf);
 
 OpenasmProc openasm_jit_proc(OpenasmBuffer *buf);
 OpenasmFni openasm_jit_fni(OpenasmBuffer *buf);
