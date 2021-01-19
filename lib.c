@@ -1,13 +1,17 @@
 #include "include/openasm.h"
 
-#define DEFAULT_BUFFER_CAP ((size_t) 16384)
+#define DEFAULT_SECTION_CAP ((size_t) 32)
 #define DEFAULT_SYMTABLE_CAP ((size_t) 128)
 
 void openasm_buffer(OpenasmBuffer *buf) {
-    size_t cap = DEFAULT_BUFFER_CAP;
+    size_t cap = DEFAULT_SECTION_CAP;
     buf->cap = cap;
     buf->len = 0;
-    buf->buffer = malloc(cap);
+    buf->sections = malloc(cap * sizeof(struct OpenasmSection));
+
+    openasm_section(buf, "data");
+    openasm_section(buf, "bss");
+    openasm_section(buf, "text");
 
     buf->sym = 0;
     cap = DEFAULT_SYMTABLE_CAP;
@@ -26,16 +30,20 @@ void openasm_buffer(OpenasmBuffer *buf) {
 }
 
 void openasm_del_buffer(OpenasmBuffer *buf) {
-    free(buf->buffer);
+    for (size_t i = 0; i < buf->len; i++) {
+        free(buf->sections[i].buffer);
+    }
+    free(buf->symtable.table);
+    free(buf->sections);
 }
 
 uint8_t *openasm_new(OpenasmBuffer *buf) {
-    if (buf->len + OPENASM_MAX_SIZE >= buf->cap) {
-        buf->cap *= 2;
-        buf->buffer = realloc(buf->buffer, buf->cap);
+    if (buf->sections[buf->section].len + OPENASM_MAX_SIZE >= buf->sections[buf->section].cap) {
+        buf->sections[buf->section].cap *= 2;
+        buf->sections[buf->section].buffer = realloc(buf->sections[buf->section].buffer, buf->sections[buf->section].cap);
     }
 
-    return buf->buffer + buf->len;
+    return buf->sections[buf->section].buffer + buf->sections[buf->section].len;
 }
 
 uint8_t *openasm_legacy_prefix(OpenasmBuffer *buf, uint8_t *ptr, uint8_t prefix) {
@@ -165,7 +173,7 @@ uint8_t *openasm_imm8(OpenasmBuffer *buf, uint8_t *ptr, uint8_t imm) {
     buf->size += 1;
     ptr[0] = imm;
     if (buf->sym) {
-        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->buffer;
+        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->sections[buf->section].buffer;
         buf->symtable.table[buf->symtable.len - 1].bits = 8;
         buf->sym = 0;
     }
@@ -182,7 +190,7 @@ uint8_t *openasm_imm16(OpenasmBuffer *buf, uint8_t *ptr, uint16_t imm) {
     ptr[0] = imm & 0xff;
     ptr[1] = (imm >> 8) & 0xff;
     if (buf->sym) {
-        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->buffer;
+        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->sections[buf->section].buffer;
         buf->symtable.table[buf->symtable.len - 1].bits = 16;
         buf->sym = 0;
     }
@@ -201,7 +209,7 @@ uint8_t *openasm_imm32(OpenasmBuffer *buf, uint8_t *ptr, uint32_t imm) {
     ptr[2] = (imm >> 16) & 0xff;
     ptr[3] = (imm >> 24) & 0xff;
     if (buf->sym) {
-        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->buffer;
+        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->sections[buf->section].buffer;
         buf->symtable.table[buf->symtable.len - 1].bits = 32;
         buf->sym = 0;
     }
@@ -224,7 +232,7 @@ uint8_t *openasm_imm64(OpenasmBuffer *buf, uint8_t *ptr, uint64_t imm) {
     ptr[6] = (imm >> 48) & 0xff;
     ptr[7] = (imm >> 56) & 0xff;
     if (buf->sym) {
-        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->buffer;
+        buf->symtable.table[buf->symtable.len - 1].offset = ptr - buf->sections[buf->section].buffer;
         buf->symtable.table[buf->symtable.len - 1].bits = 64;
         buf->sym = 0;
     }
@@ -244,7 +252,7 @@ int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end) {
     buf->has_sib = 0;
     buf->has_disp = 0;
     buf->has_imm = 0;
-    buf->len += end - start;
+    buf->sections[buf->section].len += end - start;
 
     return 0;
 }

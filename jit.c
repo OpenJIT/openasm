@@ -2,19 +2,22 @@
 #include <errno.h>
 #include "include/openasm.h"
 
+// TODO: .data, .bss and other sections
 OpenasmProc openasm_jit_proc(OpenasmBuffer *buf) {
+    openasm_section(buf, "text");
+    
     int status;
     
-    void *addr = mmap(NULL, buf->len, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_EXECUTABLE, 0, 0);
+    void *addr = mmap(NULL, buf->sections[buf->section].len, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_EXECUTABLE, 0, 0);
     if (addr == ((void *) -1)) {
         int err = errno;
         fprintf(stderr, "error: %s\n", strerror(err));
         return NULL;
     }
     
-    memcpy(addr, buf->buffer, buf->len);
+    memcpy(addr, buf->sections[buf->section].buffer, buf->sections[buf->section].len);
     
-    status = mprotect(addr, buf->len, PROT_READ | PROT_EXEC);
+    status = mprotect(addr, buf->sections[buf->section].len, PROT_READ | PROT_EXEC);
     if (status == -1) {
         int err = errno;
         fprintf(stderr, "error: %s\n", strerror(err));

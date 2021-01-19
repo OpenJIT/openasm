@@ -44,10 +44,19 @@ struct OpenasmSymbolTable {
     struct OpenasmSymbol *table;
 };
 
-struct OpenasmBuffer {
+struct OpenasmSection {
+    const char *name;
     size_t len;
     size_t cap;
     uint8_t *buffer;
+};
+
+struct OpenasmBuffer {
+    size_t len;
+    size_t cap;
+    struct OpenasmSection *sections;
+    
+    size_t section;
 
     int sym;
     struct OpenasmSymbolTable symtable;
@@ -408,6 +417,8 @@ int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end);
 
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...);
 
+void openasm_section(OpenasmBuffer *buf, const char *section);
+    
 // `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
 // Must be used after all uses of the symbol were emitted, or it will otherwise create
 // erroneous results.
