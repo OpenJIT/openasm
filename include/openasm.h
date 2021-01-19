@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <elf.h>
 
 #define openasm_stringify1(x) #x
 #define openasm_stringify(x) openasm_stringify1(x)
@@ -29,6 +30,19 @@ typedef long long (*OpenasmFnll)();
 typedef float (*OpenasmFnf)();
 typedef double (*OpenasmFnd)();
 typedef void *(*OpenasmFnvp)();
+
+#define OPENASM_ELF_TYPE 0x3
+#define OPENASM_ELF_CORE 3
+#define OPENASM_ELF_DYN 2
+#define OPENASM_ELF_EXEC 1
+#define OPENASM_ELF_REL 0
+
+struct OpenasmElf {
+    Elf64_Ehdr ehdr;
+    Elf64_Phdr phdrs[5];
+    Elf64_Shdr shdrs[6];
+    /* Elf64_Dyn dyns[0]; */
+};
 
 struct OpenasmSymbol {
     const char *sym;
@@ -425,6 +439,7 @@ void openasm_section(OpenasmBuffer *buf, const char *section);
 bool openasm_symbol(OpenasmBuffer *buf, const char *sym, uint64_t addr);
 // Returns 1 if some symbol was not defined, but only emits a warning if one wasn't.
 int openasm_link(OpenasmBuffer *buf);
+int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf);
 
 OpenasmProc openasm_jit_proc(OpenasmBuffer *buf);
 OpenasmFni openasm_jit_fni(OpenasmBuffer *buf);

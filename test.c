@@ -29,6 +29,10 @@ int main() {
         return status;
     }
 
+    FILE *fileout = fopen("test", "w");
+    openasm_elfdump(fileout, OPENASM_ELF_EXEC, &buf);
+    fclose(fileout);
+
     OpenasmFni fn = openasm_jit_fni(&buf);
     int i = fn();
     printf("%d\n", i);
