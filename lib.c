@@ -38,6 +38,34 @@ void openasm_del_buffer(OpenasmBuffer *buf) {
     free(buf->sections);
 }
 
+uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr) {
+    if (buf->sections[buf->section].len + len >= buf->sections[buf->section].cap) {
+        buf->sections[buf->section].cap *= 2;
+        buf->sections[buf->section].buffer = realloc(buf->sections[buf->section].buffer, buf->sections[buf->section].cap);
+    }
+
+    void *buffer = buf->sections[buf->section].buffer;
+    void *dest = buffer + buf->sections[buf->section].len;
+    memcpy(dest, ptr, len);
+    buf->sections[buf->section].len += len;
+    
+    return dest - buffer;
+}
+
+uint64_t openasm_res(OpenasmBuffer *buf, size_t len) {
+    if (buf->sections[buf->section].len + len >= buf->sections[buf->section].cap) {
+        buf->sections[buf->section].cap *= 2;
+        buf->sections[buf->section].buffer = realloc(buf->sections[buf->section].buffer, buf->sections[buf->section].cap);
+    }
+
+    void *buffer = buf->sections[buf->section].buffer;
+    void *dest = buffer + buf->sections[buf->section].len;
+    memset(dest, 0, len);
+    buf->sections[buf->section].len += len;
+    
+    return dest - buffer;
+}
+
 uint8_t *openasm_new(OpenasmBuffer *buf) {
     if (buf->sections[buf->section].len + OPENASM_MAX_SIZE >= buf->sections[buf->section].cap) {
         buf->sections[buf->section].cap *= 2;

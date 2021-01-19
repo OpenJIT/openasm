@@ -12,7 +12,7 @@ int main() {
     status |= openasm_instf(&buf, "push %r", "rbp");
     status |= openasm_instf(&buf, "mov %r, %r", "rbp", "rsp");
     status |= openasm_instf(&buf, "sub %r, %i32", "rsp", 8);
-    status |= openasm_instf(&buf, "mov %r, %s64", "rbx", some_var);
+    status |= openasm_instf(&buf, "mov %r, %s64", "rbx", "text", some_var);
     status |= openasm_instf(&buf, "mov %m, %i64", OPENASM_MEM("rbx", NULL, 0, 0), 1);
     status |= openasm_instf(&buf, "mov %r, %i32", reg0, 42);
     status |= openasm_instf(&buf, "mov %r, %i32", reg1, 69);

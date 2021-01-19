@@ -24,10 +24,11 @@ void openasm_section(OpenasmBuffer *buf, const char *section) {
     buf->section = buf->len++;
 }
 
-bool openasm_symbol(OpenasmBuffer *buf, const char *sym, uint64_t addr) {
+bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr) {
     bool used = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
-        if (strcmp(buf->symtable.table[i].sym, sym) == 0) {
+        if (strcmp(buf->symtable.table[i].section, section) == 0
+            && strcmp(buf->symtable.table[i].sym, sym) == 0) {
             used = 1;
             buf->symtable.table[i].addr = addr;
             buf->symtable.table[i].defined = 1;
@@ -36,9 +37,7 @@ bool openasm_symbol(OpenasmBuffer *buf, const char *sym, uint64_t addr) {
     return used;
 }
 
-// TODO: resolve symbols in other sections
 int openasm_link(OpenasmBuffer *buf) {
-    openasm_section(buf, "text");
     int status = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
         if (!buf->symtable.table[i].defined) {
@@ -46,6 +45,7 @@ int openasm_link(OpenasmBuffer *buf) {
             fprintf(stderr, "warning: undefined symbol: %s\n", buf->symtable.table[i].sym);
             continue;
         }
+        openasm_section(buf, buf->symtable.table[i].src_section);
         uint64_t offset = buf->symtable.table[i].offset;
         uint64_t addr = buf->symtable.table[i].addr;
         uint8_t *ptr = buf->sections[buf->section].buffer + offset;

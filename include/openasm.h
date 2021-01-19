@@ -45,6 +45,8 @@ struct OpenasmElf {
 };
 
 struct OpenasmSymbol {
+    const char *src_section;
+    const char *addr_section;
     const char *sym;
     int defined;
     int bits;
@@ -430,13 +432,15 @@ uint8_t *openasm_imm64(OpenasmBuffer *buf, uint8_t *ptr, uint64_t imm);
 int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end);
 
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...);
+uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr);
+uint64_t openasm_res(OpenasmBuffer *buf, size_t len);
 
 void openasm_section(OpenasmBuffer *buf, const char *section);
     
 // `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
 // Must be used after all uses of the symbol were emitted, or it will otherwise create
 // erroneous results.
-bool openasm_symbol(OpenasmBuffer *buf, const char *sym, uint64_t addr);
+bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr);
 // Returns 1 if some symbol was not defined, but only emits a warning if one wasn't.
 int openasm_link(OpenasmBuffer *buf);
 int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf);
