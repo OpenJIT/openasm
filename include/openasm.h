@@ -387,6 +387,17 @@ struct OpenasmRegister {
 #define OPENASM_SUB_R32_RM32 0x2b
 #define OPENASM_SUB_R64_RM64 0x2b /* requires REX.W */
 
+#define OPENASM_CMP_AL_IMM8 0x3c
+#define OPENASM_CMP_AX_IMM16 0x3d /* requires 66h prefix */
+#define OPENASM_CMP_EAX_IMM32 0x3d
+#define OPENASM_CMPSX_RAX_IMM32 0x3d /* requires REX.W */
+#define OPENASM_CMPSX_RM64_IMM32 0x81 /* requires REX.W and reg=7 */
+#define OPENASM_CMP_RM64_R64 0x39 /* requires REX.W */
+#define OPENASM_CMP_R8_RM8 0x3a /* requires REX */
+#define OPENASM_CMP_R16_RM16 0x3b /* requires 66h prefix */
+#define OPENASM_CMP_R32_RM32 0x3b
+#define OPENASM_CMP_R64_RM64 0x3b /* requires REX.W */
+
 #define OPENASM_MOV_RM8_R8 0x88 /* requires REX */
 #define OPENASM_MOV_RM16_R16 0x89 /* requires 66h prefix */
 #define OPENASM_MOV_RM32_R32 0x89
@@ -416,6 +427,26 @@ struct OpenasmRegister {
 
 #define OPENASM_RET_NEAR 0xc3
 #define OPENASM_RET_FAR 0xcb
+
+#define OPENASM_JMP_SHORT 0xe8
+#define OPENASM_JMP_NEAR 0xe9
+
+#define OPENASM_JC_SHORT 0x72
+#define OPENASM_JCXZ_SHORT 0xe3
+#define OPENASM_JE_SHORT 0x74
+#define OPENASM_JNE_SHORT 0x75
+#define OPENASM_JG_SHORT 0x7f
+#define OPENASM_JGE_SHORT 0x7d
+#define OPENASM_JL_SHORT 0x7c
+#define OPENASM_JLE_SHORT 0x7e
+// all of these require a 2-byte escape
+#define OPENASM_JC_NEAR 0x82
+#define OPENASM_JE_NEAR 0x84
+#define OPENASM_JNE_NEAR 0x85
+#define OPENASM_JG_NEAR 0x8f
+#define OPENASM_JGE_NEAR 0x8d
+#define OPENASM_JL_NEAR 0x8c
+#define OPENASM_JLE_NEAR 0x8e
 
 void openasm_buffer(OpenasmBuffer *buf);
 void openasm_del_buffer(OpenasmBuffer *buf);

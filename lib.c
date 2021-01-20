@@ -970,6 +970,46 @@ int openasm_sub_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
     return openasm_addlike_r64_rm64(buf, args, OPENASM_SUB_R64_RM64, 5);
 }
 
+int openasm_cmp_al_imm8(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_al_imm8(buf, args, OPENASM_CMP_AL_IMM8, 7);
+}
+
+int openasm_cmp_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_ax_imm16(buf, args, OPENASM_CMP_AX_IMM16, 7);
+}
+
+int openasm_cmp_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_eax_imm32(buf, args, OPENASM_CMP_EAX_IMM32, 7);
+}
+
+int openasm_cmpsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addsxlike_rax_imm32(buf, args, OPENASM_CMPSX_RAX_IMM32, 7);
+}
+
+int openasm_cmpsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addsxlike_rm64_imm32(buf, args, OPENASM_CMPSX_RM64_IMM32, 7);
+}
+
+int openasm_cmp_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_rm64_r64(buf, args, OPENASM_CMP_RM64_R64, 7);
+}
+
+int openasm_cmp_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_r8_rm8(buf, args, OPENASM_CMP_R8_RM8, 7);
+}
+
+int openasm_cmp_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_r16_rm16(buf, args, OPENASM_CMP_R16_RM16, 7);
+}
+
+int openasm_cmp_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_r32_rm32(buf, args, OPENASM_CMP_R32_RM32, 7);
+}
+
+int openasm_cmp_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
+    return openasm_addlike_r64_rm64(buf, args, OPENASM_CMP_R64_RM64, 7);
+}
+
 // TODO: accept rm8 operands
 int openasm_mov_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *args) {
     uint8_t *start = openasm_new(buf);
@@ -1978,6 +2018,94 @@ int openasm_ret(OpenasmBuffer *buf, OpenasmOperand *args) {
     return openasm_build(buf, start, inst);
 }
 
+int openasm_jmp_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode1(buf, inst, OPENASM_JMP_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jc_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JC_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_je_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JE_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jne_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JNE_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jl_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JL_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jle_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JLE_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jg_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JG_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
+int openasm_jge_near(OpenasmBuffer *buf, OpenasmOperand *args) {
+    (void) args;
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_opcode2(buf, inst, OPENASM_JGE_NEAR);
+    inst = openasm_imm32(buf, inst, args[0].imm);
+    
+    return openasm_build(buf, start, inst);
+}
+
 static int (*openasm_inst_add[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_REG64)] = openasm_addsx_rm64_imm32,
     [OPENASM_CONS2(OPENASM_OP_REG64, OPENASM_OP_MEMORY)] = openasm_add_rm64_r64,
@@ -2056,6 +2184,19 @@ static int (*openasm_inst_sub[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG64)] = openasm_sub_r64_rm64,
 };
 
+static int (*openasm_inst_cmp[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_REG64)] = openasm_cmpsx_rm64_imm32,
+    [OPENASM_CONS2(OPENASM_OP_REG64, OPENASM_OP_MEMORY)] = openasm_cmp_rm64_r64,
+    [OPENASM_CONS2(OPENASM_OP_REG8, OPENASM_OP_REG8)] = openasm_cmp_r8_rm8,
+    [OPENASM_CONS2(OPENASM_OP_REG32, OPENASM_OP_REG16)] = openasm_cmp_r16_rm16,
+    [OPENASM_CONS2(OPENASM_OP_REG32, OPENASM_OP_REG32)] = openasm_cmp_r32_rm32,
+    [OPENASM_CONS2(OPENASM_OP_REG64, OPENASM_OP_REG64)] = openasm_cmp_r64_rm64,
+    [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG8)] = openasm_cmp_r8_rm8,
+    [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG16)] = openasm_cmp_r16_rm16,
+    [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG32)] = openasm_cmp_r32_rm32,
+    [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG64)] = openasm_cmp_r64_rm64,
+};
+
 static int (*openasm_inst_mov[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS2(OPENASM_OP_REG8, OPENASM_OP_MEMORY)] = openasm_mov_rm8_r8,
     [OPENASM_CONS2(OPENASM_OP_REG16, OPENASM_OP_MEMORY)] = openasm_mov_rm16_r16,
@@ -2105,6 +2246,46 @@ static int (*openasm_inst_ret[])(OpenasmBuffer *, OpenasmOperand *) = {
     openasm_ret,
 };
 
+static int (*openasm_inst_jmp[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jmp_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jmp_near,
+};
+
+static int (*openasm_inst_jc[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jc_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jc_near,
+};
+
+static int (*openasm_inst_je[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_je_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_je_near,
+};
+
+static int (*openasm_inst_jne[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jne_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jne_near,
+};
+
+static int (*openasm_inst_jl[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jl_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jl_near,
+};
+
+static int (*openasm_inst_jle[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jle_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jle_near,
+};
+
+static int (*openasm_inst_jg[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jg_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jg_near,
+};
+
+static int (*openasm_inst_jge[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS1(OPENASM_OP_IMM32)] = openasm_jge_near,
+    [OPENASM_CONS1(OPENASM_OP_IMM64)] = openasm_jge_near,
+};
+
 struct OpenasmEntry openasm_inst[] = {
     { "add", openasm_inst_add },
     { "adc", openasm_inst_adc },
@@ -2112,6 +2293,7 @@ struct OpenasmEntry openasm_inst[] = {
     { "or", openasm_inst_or },
     { "xor", openasm_inst_xor },
     { "sub", openasm_inst_sub },
+    { "cmp", openasm_inst_cmp },
     { "mov", openasm_inst_mov },
     { "lea", openasm_inst_lea },
     { "pop", openasm_inst_pop },
@@ -2119,6 +2301,16 @@ struct OpenasmEntry openasm_inst[] = {
     { "call", openasm_inst_call },
     { "syscall", openasm_inst_syscall },
     { "ret", openasm_inst_ret },
+    { "jmp", openasm_inst_jmp },
+    { "jc", openasm_inst_jc },
+    { "jz", openasm_inst_je },
+    { "jnz", openasm_inst_jne },
+    { "je", openasm_inst_je },
+    { "jne", openasm_inst_jne },
+    { "jl", openasm_inst_jl },
+    { "jle", openasm_inst_jle },
+    { "jg", openasm_inst_jg },
+    { "jge", openasm_inst_jge },
     { 0 },
 };
 
