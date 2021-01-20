@@ -1297,7 +1297,6 @@ int openasm_mov_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *args) {
     return openasm_build(buf, start, inst);
 }
 
-// TODO: accept m64 operands
 int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
@@ -1590,6 +1589,99 @@ int openasm_movsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *args) {
         inst = openasm_imm32(buf, inst, args[1].imm);
         return openasm_build(buf, start, inst);
     }
+}
+
+int openasm_lea_r64_m64(OpenasmBuffer *buf, OpenasmOperand *args) {
+    uint8_t *start = openasm_new(buf);
+    uint8_t *inst = start;
+
+    inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW);
+    inst = openasm_opcode1(buf, inst, OPENASM_LEA_R64_M64);
+
+    uint32_t target_reg = -1;
+    const char *target = args[0].reg;
+
+    for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+        if (strcmp(target, reg->key) == 0 && reg->bits == 64) {
+            target_reg = reg->val;
+            break;
+        }
+    }
+
+    if (target_reg == (uint32_t) -1) {
+        fprintf(stderr, "error: invalid target register: \"%s\"\n", target);
+        return 1;
+    }
+
+    uint32_t base_reg = -1;
+    const char *base = args[1].mem.base;
+
+    for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+        if (strcmp(base, reg->key) == 0 && reg->bits == 64) {
+            base_reg = reg->val;
+            break;
+        }
+    }
+
+    if (base_reg == (uint32_t) -1) {
+        fprintf(stderr, "error: invalid base register: \"%s\"\n", base);
+        return 1;
+    }
+
+    uint32_t index_reg = -1;
+    const char *index = args[1].mem.index;
+
+    if (index) {
+        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+            if (strcmp(index, reg->key) == 0 && reg->bits == 64) {
+                index_reg = reg->val;
+                break;
+            }
+        }
+
+        if (index_reg == (uint32_t) -1) {
+            fprintf(stderr, "error: invalid index register: \"%s\"\n", index);
+            return 1;
+        }
+    }
+
+    if (index) {
+        uint32_t scale = 0;
+        switch (args[1].mem.scale) {
+        case 1:
+            scale = OPENASM_SCALE_1;
+            break;
+        case 2:
+            scale = OPENASM_SCALE_2;
+            break;
+        case 4:
+            scale = OPENASM_SCALE_4;
+            break;
+        case 8:
+            scale = OPENASM_SCALE_8;
+            break;
+        default:
+            fprintf(stderr, "error: invalid scale argument: %lu\n", args[1].mem.scale);
+            return 1;
+        }
+        // TODO: special case where mod = 0x0, r/m = 0x5 is disp32 (and not rbp!)
+        if (args[1].mem.disp) {
+            inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB_DISP32, target_reg, OPENASM_MODRM_RM_EA_SIB));
+            inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
+            inst = openasm_disp32(buf, inst, (int32_t) args[1].mem.disp);
+        } else {
+            inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB, target_reg, OPENASM_MODRM_RM_EA_SIB));
+            inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
+        }
+    } else {
+        if (args[1].mem.disp) {
+            inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM_DISP32, target_reg, base_reg));
+            inst = openasm_disp32(buf, inst, (int32_t) args[1].mem.disp);
+        } else {
+            inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM, target_reg, base_reg));
+        }
+    }
+    return openasm_build(buf, start, inst);
 }
 
 int openasm_pop_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
@@ -1986,6 +2078,10 @@ static int (*openasm_inst_mov[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS2(OPENASM_OP_IMM64, OPENASM_OP_MEMORY)] = openasm_movsx_rm64_imm32,
 };
 
+static int (*openasm_inst_lea[])(OpenasmBuffer *, OpenasmOperand *) = {
+    [OPENASM_CONS2(OPENASM_OP_MEMORY, OPENASM_OP_REG64)] = openasm_lea_r64_m64,
+};
+
 static int (*openasm_inst_pop[])(OpenasmBuffer *, OpenasmOperand *) = {
     [OPENASM_CONS1(OPENASM_OP_MEMORY)] = openasm_pop_rm64,
     [OPENASM_CONS1(OPENASM_OP_REG64)] = openasm_pop_r64,
@@ -2017,6 +2113,7 @@ struct OpenasmEntry openasm_inst[] = {
     { "xor", openasm_inst_xor },
     { "sub", openasm_inst_sub },
     { "mov", openasm_inst_mov },
+    { "lea", openasm_inst_lea },
     { "pop", openasm_inst_pop },
     { "push", openasm_inst_push },
     { "call", openasm_inst_call },

@@ -401,6 +401,8 @@ struct OpenasmRegister {
 #define OPENASM_MOV_RM32_IMM32 0xc7
 #define OPENASM_MOVSX_RM64_IMM32 0xc7 /* requires REX.W */
 
+#define OPENASM_LEA_R64_M64 0x8d
+
 #define OPENASM_POP_RM64 0x8f /* requires reg=0 */
 #define OPENASM_POP_R64 0x58
 
