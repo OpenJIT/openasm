@@ -1306,30 +1306,115 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R64_RM64);
 
     uint32_t target_reg = -1;
-    uint32_t source_reg = -1;
-    const char *target = args[0].reg;
-    const char *source = args[1].reg;
-    for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
-        if (strcmp(target, reg->key) == 0 && reg->bits == 64) {
-            target_reg = reg->val;
-        }
-        if (strcmp(source, reg->key) == 0 && reg->bits == 64) {
-            source_reg = reg->val;
-        }
-    }
+    const char *target = args[1].reg;
 
-    if (target_reg == (uint32_t) -1) {
-        fprintf(stderr, "error: invalid target register: \"%s\"\n", target);
-        return 1;
-    }
+    if (args[0].tag == OPENASM_OP_MEMORY) {
+        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+            if (strcmp(target, reg->key) == 0 && reg->bits == 64) {
+                target_reg = reg->val;
+                break;
+            }
+        }
 
-    if (source_reg == (uint32_t) -1) {
-        fprintf(stderr, "error: invalid source register: \"%s\"\n", source);
-        return 1;
-    }
+        if (target_reg == (uint32_t) -1) {
+            fprintf(stderr, "error: invalid target register: \"%s\"\n", target);
+            return 1;
+        }
+
+        uint32_t base_reg = -1;
+        const char *base = args[0].mem.base;
+
+        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+            if (strcmp(base, reg->key) == 0 && reg->bits == 64) {
+                base_reg = reg->val;
+                break;
+            }
+        }
+
+        if (base_reg == (uint32_t) -1) {
+            fprintf(stderr, "error: invalid base register: \"%s\"\n", base);
+            return 1;
+        }
+
+        uint32_t index_reg = -1;
+        const char *index = args[0].mem.index;
+
+        if (index) {
+            for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+                if (strcmp(index, reg->key) == 0 && reg->bits == 64) {
+                    index_reg = reg->val;
+                    break;
+                }
+            }
+
+            if (index_reg == (uint32_t) -1) {
+                fprintf(stderr, "error: invalid index register: \"%s\"\n", index);
+                return 1;
+            }
+        }
+
+        if (index) {
+            uint32_t scale = 0;
+            switch (args[0].mem.scale) {
+            case 1:
+                scale = OPENASM_SCALE_1;
+                break;
+            case 2:
+                scale = OPENASM_SCALE_2;
+                break;
+            case 4:
+                scale = OPENASM_SCALE_4;
+                break;
+            case 8:
+                scale = OPENASM_SCALE_8;
+                break;
+            default:
+                fprintf(stderr, "error: invalid scale argument: %lu\n", args[0].mem.scale);
+                return 1;
+            }
+            // TODO: special case where mod = 0x0, r/m = 0x5 is disp32 (and not rbp!)
+            if (args[0].mem.disp) {
+                inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB_DISP32, target_reg, OPENASM_MODRM_RM_EA_SIB));
+                inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
+                inst = openasm_disp32(buf, inst, (int32_t) args[0].mem.disp);
+            } else {
+                inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB, target_reg, OPENASM_MODRM_RM_EA_SIB));
+                inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
+            }
+        } else {
+            if (args[0].mem.disp) {
+                inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM_DISP32, target_reg, base_reg));
+                inst = openasm_disp32(buf, inst, (int32_t) args[0].mem.disp);
+            } else {
+                inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM, target_reg, base_reg));
+            }
+        }
+        return openasm_build(buf, start, inst);
+    } else {
+        uint32_t source_reg = -1;
+        const char *source = args[0].reg;
+        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+            if (strcmp(source, reg->key) == 0 && reg->bits == 64) {
+                source_reg = reg->val;
+            }
+            if (strcmp(target, reg->key) == 0 && reg->bits == 64) {
+                target_reg = reg->val;
+            }
+        }
+
+        if (source_reg == (uint32_t) -1) {
+            fprintf(stderr, "error: invalid source register: \"%s\"\n", source);
+            return 1;
+        }
+
+        if (target_reg == (uint32_t) -1) {
+            fprintf(stderr, "error: invalid target register: \"%s\"\n", target);
+            return 1;
+        }
     
-    inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_REG, target_reg, source_reg));
-    return openasm_build(buf, start, inst);
+        inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_REG, target_reg, source_reg));
+        return openasm_build(buf, start, inst);
+    }
 }
 
 int openasm_mov_r16_imm16(OpenasmBuffer *buf, OpenasmOperand *args) {
