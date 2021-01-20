@@ -1306,9 +1306,9 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R64_RM64);
 
     uint32_t target_reg = -1;
-    const char *target = args[1].reg;
+    const char *target = args[0].reg;
 
-    if (args[0].tag == OPENASM_OP_MEMORY) {
+    if (args[1].tag == OPENASM_OP_MEMORY) {
         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
             if (strcmp(target, reg->key) == 0 && reg->bits == 64) {
                 target_reg = reg->val;
@@ -1322,7 +1322,7 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
         }
 
         uint32_t base_reg = -1;
-        const char *base = args[0].mem.base;
+        const char *base = args[1].mem.base;
 
         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
             if (strcmp(base, reg->key) == 0 && reg->bits == 64) {
@@ -1337,7 +1337,7 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
         }
 
         uint32_t index_reg = -1;
-        const char *index = args[0].mem.index;
+        const char *index = args[1].mem.index;
 
         if (index) {
             for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
@@ -1355,7 +1355,7 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
 
         if (index) {
             uint32_t scale = 0;
-            switch (args[0].mem.scale) {
+            switch (args[1].mem.scale) {
             case 1:
                 scale = OPENASM_SCALE_1;
                 break;
@@ -1369,22 +1369,22 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
                 scale = OPENASM_SCALE_8;
                 break;
             default:
-                fprintf(stderr, "error: invalid scale argument: %lu\n", args[0].mem.scale);
+                fprintf(stderr, "error: invalid scale argument: %lu\n", args[1].mem.scale);
                 return 1;
             }
             // TODO: special case where mod = 0x0, r/m = 0x5 is disp32 (and not rbp!)
-            if (args[0].mem.disp) {
+            if (args[1].mem.disp) {
                 inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB_DISP32, target_reg, OPENASM_MODRM_RM_EA_SIB));
                 inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
-                inst = openasm_disp32(buf, inst, (int32_t) args[0].mem.disp);
+                inst = openasm_disp32(buf, inst, (int32_t) args[1].mem.disp);
             } else {
                 inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_SIB, target_reg, OPENASM_MODRM_RM_EA_SIB));
                 inst = openasm_sib(buf, inst, OPENASM_SIB(scale, index_reg, base_reg));
             }
         } else {
-            if (args[0].mem.disp) {
+            if (args[1].mem.disp) {
                 inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM_DISP32, target_reg, base_reg));
-                inst = openasm_disp32(buf, inst, (int32_t) args[0].mem.disp);
+                inst = openasm_disp32(buf, inst, (int32_t) args[1].mem.disp);
             } else {
                 inst = openasm_modrm(buf, inst, OPENASM_MODRM(OPENASM_MODRM_MOD_EA_MEM, target_reg, base_reg));
             }
@@ -1392,7 +1392,7 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *args) {
         return openasm_build(buf, start, inst);
     } else {
         uint32_t source_reg = -1;
-        const char *source = args[0].reg;
+        const char *source = args[1].reg;
         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
             if (strcmp(source, reg->key) == 0 && reg->bits == 64) {
                 source_reg = reg->val;
