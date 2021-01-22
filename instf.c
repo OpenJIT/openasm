@@ -12,7 +12,9 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
     const char *ptr = fmt;
     char *mnemonic = malloc(strlen(fmt) + 1);
     OpenasmOperand operands[8] = {0};
+    int ext[3] = {0};
     size_t arity = 0;
+    size_t regs = 0;
 
     while (*fmt && *fmt != ' ') ++fmt;
 
@@ -40,6 +42,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     uint32_t tag = -1;
                     for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
                         if (strcmp(target, reg->key) == 0) {
+                            ext[regs] = reg->ext;
                             switch (reg->bits) {
                             case 8:
                                 tag = OPENASM_OP_REG8;
@@ -60,12 +63,23 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                         }
                     }
                     operands[arity].tag = tag;
+                    if (regs == 0 && ext[regs]) {
+                        operands[0].aux |= OPENASM_AUX_REXR;
+                    } else if (regs == 1 && ext[regs]) {
+                        operands[0].aux |= OPENASM_AUX_REXB;
+                    } else {
+                        operands[0].aux |= OPENASM_AUX_NONE;
+                    }
                     operands[arity++].reg = target;
+                    ++regs;
                 } break;
                 case 'i': {
                     uint64_t imm = va_arg(args, uint64_t);
                     operands[arity].imm = imm;
-                    if (fmt[1] == '1') {
+                    if (fmt[1] == '8') {
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_IMM8;
+                    } else if (fmt[1] == '1') {
                         ++fmt;
                         if (fmt[1] != '6') {
                             fprintf(stderr, "error: invalid immediate bitwidth\n");
@@ -99,8 +113,41 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                 } break;
                 case 'm': {
                     struct OpenasmMemory mem = va_arg(args, struct OpenasmMemory);
-                    operands[arity].tag = OPENASM_OP_MEMORY;
                     operands[arity++].mem = mem;
+                    if (fmt[1] == '8') {
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_MEMORY8;
+                    } else if (fmt[1] == '1') {
+                        ++fmt;
+                        if (fmt[1] != '6') {
+                            fprintf(stderr, "error: invalid immediate bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_MEMORY16;
+                    } else if (fmt[1] == '3') {
+                        ++fmt;
+                        if (fmt[1] != '2') {
+                            fprintf(stderr, "error: invalid immediate bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_MEMORY32;
+                    } else if (fmt[1] == '6') {
+                        ++fmt;
+                        if (fmt[1] != '4') {
+                            fprintf(stderr, "error: invalid immediate bitwidth\n");
+                            return 1;
+                        }
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_MEMORY64;
+                    } else if (fmt[1] >= '0' && fmt[1] <= '9') {
+                        fprintf(stderr, "error: invalid immediate bitwidth\n");
+                        return 1;
+                    } else {
+                        fprintf(stderr, "warning: unspecified immediate bitwidth, defaulting to 32\n");
+                        operands[arity++].tag = OPENASM_OP_MEMORY32;
+                    }
                 } break;
                 case 's': {
                     if (buf->symtable.len == buf->symtable.cap) {
@@ -121,7 +168,10 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     buf->symtable.table[buf->symtable.len].addr = 0;
                     buf->symtable.table[buf->symtable.len++].rel = 0;
                     operands[arity].imm = 0;
-                    if (fmt[1] == '1') {
+                    if (fmt[1] == '8') {
+                        ++fmt;
+                        operands[arity++].tag = OPENASM_OP_IMM8;
+                    } else if (fmt[1] == '1') {
                         ++fmt;
                         if (fmt[1] != '6') {
                             fprintf(stderr, "error: invalid symbol bitwidth\n");

@@ -6,8 +6,8 @@ int main() {
     
     OpenasmBuffer buf;
     openasm_buffer(&buf);
-    const char *reg0 = "rax";
-    const char *reg1 = "rdx";
+    const char *reg0 = "r8";
+    const char *reg1 = "r9";
     /* uint64_t _start = openasm_current_addr(&buf); */
     status |= openasm_instf(&buf, "push %r", "rbp");
     status |= openasm_instf(&buf, "mov %r, %r", "rbp", "rsp");
@@ -18,9 +18,10 @@ int main() {
     status |= openasm_instf(&buf, "ret");
 
     uint64_t fun = openasm_current_addr(&buf);
-    status |= openasm_instf(&buf, "mov %r, %i32", reg0, 42);
-    status |= openasm_instf(&buf, "mov %r, %i32", reg1, 69);
+    status |= openasm_instf(&buf, "mov %r, %i64", reg0, 42);
+    status |= openasm_instf(&buf, "mov %r, %i64", reg1, 69);
     status |= openasm_instf(&buf, "add %r, %r", reg0, reg1);
+    status |= openasm_instf(&buf, "mov %r, %r", "rax", reg0);
     status |= openasm_instf(&buf, "ret");
 
     openasm_symbol(&buf, "text", "fun", fun);

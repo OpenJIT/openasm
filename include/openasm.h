@@ -102,14 +102,29 @@ struct OpenasmProperty {
 };
 
 enum {
+    OPENASM_OP_AL,
+    OPENASM_OP_AX,
+    OPENASM_OP_EAX,
+    OPENASM_OP_RAX,
     OPENASM_OP_REG8,
     OPENASM_OP_REG16,
     OPENASM_OP_REG32,
     OPENASM_OP_REG64,
+    OPENASM_OP_IMM8,
     OPENASM_OP_IMM16,
     OPENASM_OP_IMM32,
     OPENASM_OP_IMM64,
-    OPENASM_OP_MEMORY,
+    OPENASM_OP_MEMORY8,
+    OPENASM_OP_MEMORY16,
+    OPENASM_OP_MEMORY32,
+    OPENASM_OP_MEMORY64,
+};
+
+enum {
+    OPENASM_AUX_NONE = 0x0,
+    OPENASM_AUX_REXR = 0x1,
+    OPENASM_AUX_REXB = 0x2,
+    OPENASM_AUX_REXX = 0x4,
 };
 
 struct OpenasmMemory {
@@ -120,7 +135,8 @@ struct OpenasmMemory {
 };
 
 struct OpenasmOperand {
-    unsigned int tag:3;
+    unsigned int tag:4;
+    unsigned int aux:4;
     union {
         const char *reg;
         uint64_t imm;
@@ -137,13 +153,14 @@ struct OpenasmRegister {
     const char *key;
     uint32_t val;
     uint32_t bits;
+    int ext;
 };
 
 /* useful defines */
 #define OPENASM_MAX_SIZE 23
 #define OPENASM_MEM(b, i, s, d) ((struct OpenasmMemory) { .base = b, .index = i, .scale = s, .disp = d })
-#define OPENASM_CONS1(tag) (tag & 0x7)
-#define OPENASM_CONS2(tag1, tag2) (((tag1 & 0x7) << 3) | (tag2 & 0x7))
+#define OPENASM_CONS1(tag) (tag & 0xf)
+#define OPENASM_CONS2(tag1, tag2) (((tag1 & 0xf) << 4) | (tag2 & 0xf))
 
 /* prefixes */
 // group 1 prefixes
@@ -325,7 +342,16 @@ struct OpenasmRegister {
 #define OPENASM_ADD_AX_IMM16 0x05 /* requires 66h prefix */
 #define OPENASM_ADD_EAX_IMM32 0x05
 #define OPENASM_ADDSX_RAX_IMM32 0x05 /* requires REX.W */
+#define OPENASM_ADD_RM8_IMM8 0x80 /* requires REX and reg=0 */
+#define OPENASM_ADD_RM16_IMM16 0x81 /* requires 66h prefix annd reg=0 */
+#define OPENASM_ADD_RM32_IMM32 0x81 /* requires reg=0 */
 #define OPENASM_ADDSX_RM64_IMM32 0x81 /* requires REX.W and reg=0 */
+#define OPENASM_ADDSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=0 */
+#define OPENASM_ADDSX_RM32_IMM8 0x83 /* requires reg=0 */
+#define OPENASM_ADDSX_RM64_IMM8 0x83 /* requires REX.W and reg=0 */
+#define OPENASM_ADD_RM8_R8 0x00
+#define OPENASM_ADD_RM16_R16 0x01 /* requires 66h prefix */
+#define OPENASM_ADD_RM32_R32 0x01
 #define OPENASM_ADD_RM64_R64 0x01 /* requires REX.W */
 #define OPENASM_ADD_R8_RM8 0x02 /* requires REX */
 #define OPENASM_ADD_R16_RM16 0x03 /* requires 66h prefix */
@@ -336,7 +362,16 @@ struct OpenasmRegister {
 #define OPENASM_ADC_AX_IMM16 0x15 /* requires 66h prefix */
 #define OPENASM_ADC_EAX_IMM32 0x15
 #define OPENASM_ADCSX_RAX_IMM32 0x15 /* requires REX.W */
+#define OPENASM_ADC_RM8_IMM8 0x80 /* requires REX and reg=2 */
+#define OPENASM_ADC_RM16_IMM16 0x81 /* requires 66h prefix annd reg=2 */
+#define OPENASM_ADC_RM32_IMM32 0x81 /* requires reg=2 */
 #define OPENASM_ADCSX_RM64_IMM32 0x81 /* requires REX.W and reg=2 */
+#define OPENASM_ADCSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=2 */
+#define OPENASM_ADCSX_RM32_IMM8 0x83 /* requires reg=2 */
+#define OPENASM_ADCSX_RM64_IMM8 0x83 /* requires REX.W and reg=2 */
+#define OPENASM_ADC_RM8_R8 0x10
+#define OPENASM_ADC_RM16_R16 0x11 /* requires 66h prefix */
+#define OPENASM_ADC_RM32_R32 0x11
 #define OPENASM_ADC_RM64_R64 0x11 /* requires REX.W */
 #define OPENASM_ADC_R8_RM8 0x12 /* requires REX */
 #define OPENASM_ADC_R16_RM16 0x13 /* requires 66h prefix */
@@ -347,7 +382,16 @@ struct OpenasmRegister {
 #define OPENASM_AND_AX_IMM16 0x25 /* requires 66h prefix */
 #define OPENASM_AND_EAX_IMM32 0x25
 #define OPENASM_ANDSX_RAX_IMM32 0x25 /* requires REX.W */
+#define OPENASM_AND_RM8_IMM8 0x80 /* requires REX and reg=4 */
+#define OPENASM_AND_RM16_IMM16 0x81 /* requires 66h prefix annd reg=4 */
+#define OPENASM_AND_RM32_IMM32 0x81 /* requires reg=4 */
 #define OPENASM_ANDSX_RM64_IMM32 0x81 /* requires REX.W and reg=4 */
+#define OPENASM_ANDSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=4 */
+#define OPENASM_ANDSX_RM32_IMM8 0x83 /* requires reg=4 */
+#define OPENASM_ANDSX_RM64_IMM8 0x83 /* requires REX.W and reg=4 */
+#define OPENASM_AND_RM8_R8 0x20
+#define OPENASM_AND_RM16_R16 0x21 /* requires 66h prefix */
+#define OPENASM_AND_RM32_R32 0x21
 #define OPENASM_AND_RM64_R64 0x21 /* requires REX.W */
 #define OPENASM_AND_R8_RM8 0x22 /* requires REX */
 #define OPENASM_AND_R16_RM16 0x23 /* requires 66h prefix */
@@ -358,7 +402,16 @@ struct OpenasmRegister {
 #define OPENASM_OR_AX_IMM16 0x0d /* requires 66h prefix */
 #define OPENASM_OR_EAX_IMM32 0x0d
 #define OPENASM_ORSX_RAX_IMM32 0x0d /* requires REX.W */
+#define OPENASM_OR_RM8_IMM8 0x80 /* requires REX and reg=1 */
+#define OPENASM_OR_RM16_IMM16 0x81 /* requires 66h prefix annd reg=1 */
+#define OPENASM_OR_RM32_IMM32 0x81 /* requires reg=1 */
 #define OPENASM_ORSX_RM64_IMM32 0x81 /* requires REX.W and reg=1 */
+#define OPENASM_ORSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=1 */
+#define OPENASM_ORSX_RM32_IMM8 0x83 /* requires reg=1 */
+#define OPENASM_ORSX_RM64_IMM8 0x83 /* requires REX.W and reg=1 */
+#define OPENASM_OR_RM8_R8 0x08
+#define OPENASM_OR_RM16_R16 0x09 /* requires 66h prefix */
+#define OPENASM_OR_RM32_R32 0x09
 #define OPENASM_OR_RM64_R64 0x09 /* requires REX.W */
 #define OPENASM_OR_R8_RM8 0x0a /* requires REX */
 #define OPENASM_OR_R16_RM16 0x0b /* requires 66h prefix */
@@ -369,7 +422,16 @@ struct OpenasmRegister {
 #define OPENASM_XOR_AX_IMM16 0x35 /* requires 66h prefix */
 #define OPENASM_XOR_EAX_IMM32 0x35
 #define OPENASM_XORSX_RAX_IMM32 0x35 /* requires REX.W */
+#define OPENASM_XOR_RM8_IMM8 0x80 /* requires REX and reg=6 */
+#define OPENASM_XOR_RM16_IMM16 0x81 /* requires 66h prefix annd reg=6 */
+#define OPENASM_XOR_RM32_IMM32 0x81 /* requires reg=6 */
 #define OPENASM_XORSX_RM64_IMM32 0x81 /* requires REX.W and reg=6 */
+#define OPENASM_XORSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=6 */
+#define OPENASM_XORSX_RM32_IMM8 0x83 /* requires reg=6 */
+#define OPENASM_XORSX_RM64_IMM8 0x83 /* requires REX.W and reg=6 */
+#define OPENASM_XOR_RM8_R8 0x30
+#define OPENASM_XOR_RM16_R16 0x31 /* requires 66h prefix */
+#define OPENASM_XOR_RM32_R32 0x31
 #define OPENASM_XOR_RM64_R64 0x31 /* requires REX.W */
 #define OPENASM_XOR_R8_RM8 0x32 /* requires REX */
 #define OPENASM_XOR_R16_RM16 0x33 /* requires 66h prefix */
@@ -380,7 +442,16 @@ struct OpenasmRegister {
 #define OPENASM_SUB_AX_IMM16 0x2d /* requires 66h prefix */
 #define OPENASM_SUB_EAX_IMM32 0x2d
 #define OPENASM_SUBSX_RAX_IMM32 0x2d /* requires REX.W */
+#define OPENASM_SUB_RM8_IMM8 0x80 /* requires REX and reg=5 */
+#define OPENASM_SUB_RM16_IMM16 0x81 /* requires 66h prefix annd reg=5 */
+#define OPENASM_SUB_RM32_IMM32 0x81 /* requires reg=5 */
 #define OPENASM_SUBSX_RM64_IMM32 0x81 /* requires REX.W and reg=5 */
+#define OPENASM_SUBSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=5 */
+#define OPENASM_SUBSX_RM32_IMM8 0x83 /* requires reg=5 */
+#define OPENASM_SUBSX_RM64_IMM8 0x83 /* requires REX.W and reg=5 */
+#define OPENASM_SUB_RM8_R8 0x28
+#define OPENASM_SUB_RM16_R16 0x29 /* requires 66h prefix */
+#define OPENASM_SUB_RM32_R32 0x29
 #define OPENASM_SUB_RM64_R64 0x29 /* requires REX.W */
 #define OPENASM_SUB_R8_RM8 0x2a /* requires REX */
 #define OPENASM_SUB_R16_RM16 0x2b /* requires 66h prefix */
@@ -391,16 +462,40 @@ struct OpenasmRegister {
 #define OPENASM_CMP_AX_IMM16 0x3d /* requires 66h prefix */
 #define OPENASM_CMP_EAX_IMM32 0x3d
 #define OPENASM_CMPSX_RAX_IMM32 0x3d /* requires REX.W */
+#define OPENASM_CMP_RM8_IMM8 0x80 /* requires REX and reg=7 */
+#define OPENASM_CMP_RM16_IMM16 0x81 /* requires 66h prefix annd reg=7 */
+#define OPENASM_CMP_RM32_IMM32 0x81 /* requires reg=7 */
 #define OPENASM_CMPSX_RM64_IMM32 0x81 /* requires REX.W and reg=7 */
+#define OPENASM_CMPSX_RM16_IMM8 0x83 /* requires 66h prefix annd reg=7 */
+#define OPENASM_CMPSX_RM32_IMM8 0x83 /* requires reg=7 */
+#define OPENASM_CMPSX_RM64_IMM8 0x83 /* requires REX.W and reg=7 */
+#define OPENASM_CMP_RM8_R8 0x38
+#define OPENASM_CMP_RM16_R16 0x39 /* requires 66h prefix */
+#define OPENASM_CMP_RM32_R32 0x39
 #define OPENASM_CMP_RM64_R64 0x39 /* requires REX.W */
 #define OPENASM_CMP_R8_RM8 0x3a /* requires REX */
 #define OPENASM_CMP_R16_RM16 0x3b /* requires 66h prefix */
 #define OPENASM_CMP_R32_RM32 0x3b
 #define OPENASM_CMP_R64_RM64 0x3b /* requires REX.W */
 
+#define OPENASM_MUL_AL_RM8 0xf6 /* requires REX, reg=4 */
+#define OPENASM_MUL_AX_RM16 0xf7 /* requires 66h prefix, reg=4 */
+#define OPENASM_MUL_EAX_RM32 0xf7 /* requires reg=4 */
 #define OPENASM_MUL_RAX_RM64 0xf7 /* requires REX.W, reg=4 */
+
+#define OPENASM_IMUL_AL_RM8 0xf6 /* requires REX, reg=5 */
+#define OPENASM_IMUL_AX_RM16 0xf7 /* requires 66h prefix, reg=5 */
+#define OPENASM_IMUL_EAX_RM32 0xf7 /* requires reg=5 */
 #define OPENASM_IMUL_RAX_RM64 0xf7 /* requires REX.W, reg=5 */
+
+#define OPENASM_DIV_AL_RM8 0xf6 /* requires REX, reg=6 */
+#define OPENASM_DIV_AX_RM16 0xf7 /* requires 66h prefix, reg=6 */
+#define OPENASM_DIV_EAX_RM32 0xf7 /* requires reg=6 */
 #define OPENASM_DIV_RAX_RM64 0xf7 /* requires REX.W, reg=6 */
+
+#define OPENASM_IDIV_AL_RM8 0xf6 /* requires REX, reg=7 */
+#define OPENASM_IDIV_AX_RM16 0xf7 /* requires 66h prefix, reg=7 */
+#define OPENASM_IDIV_EAX_RM32 0xf7 /* requires reg=7 */
 #define OPENASM_IDIV_RAX_RM64 0xf7 /* requires REX.W, reg=7 */
 
 #define OPENASM_MOV_RM8_R8 0x88 /* requires REX */
@@ -411,9 +506,12 @@ struct OpenasmRegister {
 #define OPENASM_MOV_R16_RM16 0x8b /* requires 66h prefix */
 #define OPENASM_MOV_R32_RM32 0x8b
 #define OPENASM_MOV_R64_RM64 0x8b /* requires REX.W */
+#define OPENASM_MOV_R8_IMM8 0xb0 /* requires REX */
 #define OPENASM_MOV_R16_IMM16 0xb8 /* requires 66h prefix */
 #define OPENASM_MOV_R32_IMM32 0xb8
 #define OPENASM_MOV_R64_IMM64 0xb8 /* requires REX.W */
+#define OPENASM_MOV_RM8_IMM8 0xc6 /* requires REX */
+#define OPENASM_MOV_RM16_IMM16 0xc7 /* requires 66h prefix */
 #define OPENASM_MOV_RM32_IMM32 0xc7
 #define OPENASM_MOVSX_RM64_IMM32 0xc7 /* requires REX.W */
 
@@ -508,6 +606,230 @@ OpenasmFnll openasm_jit_fnll(OpenasmBuffer *buf);
 OpenasmFnf openasm_jit_fnf(OpenasmBuffer *buf);
 OpenasmFnd openasm_jit_fnd(OpenasmBuffer *buf);
 OpenasmFnvp openasm_jit_fnvp(OpenasmBuffer *buf);
+
+int openasm_add_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_addsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_addsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_addsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_addsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_addsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_add_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_adc_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adcsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adcsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adcsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adcsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adcsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_adc_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_and_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_andsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_andsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_andsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_andsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_andsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_and_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_or_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_orsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_orsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_orsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_orsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_orsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_or_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_xor_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xorsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xorsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xorsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xorsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xorsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_xor_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_sub_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_subsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_subsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_subsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_subsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_subsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_sub_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_cmp_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_ax_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_eax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmpsx_rax_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmpsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmpsx_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmpsx_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmpsx_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_cmp_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_mul_al_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mul_ax_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mul_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mul_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_imul_al_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_imul_ax_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_imul_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_imul_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_div_al_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_div_ax_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_div_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_div_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_idiv_al_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_idiv_ax_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_idiv_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_idiv_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_mov_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_r64_imm64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_mov_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_movzx_r16_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movzx_r32_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movzx_r32_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movzx_r64_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_movsx_r16_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movsx_r32_rm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movsx_r32_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movsx_r64_rm16(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_movsx_r64_rm32(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_lea_r64_m64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_pop_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_pop_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_push_rm64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_push_r64(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_push_imm8(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_push_imm32(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_call_rel32(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_syscall(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_ret_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_ret_far(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_jmp_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jmp_near(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_jc_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jcxz_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_je_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jne_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jg_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jge_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jl_short(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jle_short(OpenasmBuffer *buf, OpenasmOperand *op);
+
+int openasm_jc_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_je_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jne_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jg_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jge_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jl_near(OpenasmBuffer *buf, OpenasmOperand *op);
+int openasm_jle_near(OpenasmBuffer *buf, OpenasmOperand *op);
 
 extern OpenasmProperty openasm_properties1[];
 extern OpenasmProperty openasm_properties2[];
