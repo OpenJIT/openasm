@@ -398,6 +398,11 @@ struct OpenasmRegister {
 #define OPENASM_CMP_R32_RM32 0x3b
 #define OPENASM_CMP_R64_RM64 0x3b /* requires REX.W */
 
+#define OPENASM_MUL_RAX_RM64 0xf7 /* requires REX.W, reg=4 */
+#define OPENASM_IMUL_RAX_RM64 0xf7 /* requires REX.W, reg=5 */
+#define OPENASM_DIV_RAX_RM64 0xf7 /* requires REX.W, reg=6 */
+#define OPENASM_IDIV_RAX_RM64 0xf7 /* requires REX.W, reg=7 */
+
 #define OPENASM_MOV_RM8_R8 0x88 /* requires REX */
 #define OPENASM_MOV_RM16_R16 0x89 /* requires 66h prefix */
 #define OPENASM_MOV_RM32_R32 0x89
@@ -411,6 +416,17 @@ struct OpenasmRegister {
 #define OPENASM_MOV_R64_IMM64 0xb8 /* requires REX.W */
 #define OPENASM_MOV_RM32_IMM32 0xc7
 #define OPENASM_MOVSX_RM64_IMM32 0xc7 /* requires REX.W */
+
+#define OPENASM_MOVZX_R16_RM8 0xb6 /* requires 66h prefix 0fh escape */
+#define OPENASM_MOVZX_R32_RM8 0xb6 /* requires 0fh escape */
+#define OPENASM_MOVZX_R32_RM16 0xb7 /* requires 0fh escape */
+#define OPENASM_MOVZX_R64_RM16 0xb7 /* requires REX.W and 0fh escape */
+
+#define OPENASM_MOVSX_R16_RM8 0xbe /* requires 66h prefix 0fh escape */
+#define OPENASM_MOVSX_R32_RM8 0xbe /* requires 0fh escape */
+#define OPENASM_MOVSX_R32_RM16 0xbf /* requires 0fh escape */
+#define OPENASM_MOVSX_R64_RM16 0xbf /* requires REX.W and 0fh escape */
+#define OPENASM_MOVSX_R64_RM32 0x63 /* requires REX.W */
 
 #define OPENASM_LEA_R64_M64 0x8d
 
