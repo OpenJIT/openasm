@@ -12,6 +12,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
     const char *ptr = fmt;
     char *mnemonic = malloc(strlen(fmt) + 1);
     OpenasmOperand operands[8] = {0};
+    size_t arity = 0;
 
     while (*fmt && *fmt != ' ') ++fmt;
 
@@ -32,7 +33,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                 ++fmt;
                 switch (*fmt) {
                 case '*': {
-                    operands[i] = va_arg(args, struct OpenasmOperand);
+                    operands[arity++] = va_arg(args, struct OpenasmOperand);
                 } break;
                 case 'r': {
                     const char *target = va_arg(args, char *);
@@ -58,12 +59,12 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             }
                         }
                     }
-                    operands[i].tag = tag;
-                    operands[i].reg = target;
+                    operands[arity].tag = tag;
+                    operands[arity++].reg = target;
                 } break;
                 case 'i': {
                     uint64_t imm = va_arg(args, uint64_t);
-                    operands[i].imm = imm;
+                    operands[arity].imm = imm;
                     if (fmt[1] == '1') {
                         ++fmt;
                         if (fmt[1] != '6') {
@@ -71,7 +72,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM16;
+                        operands[arity++].tag = OPENASM_OP_IMM16;
                     } else if (fmt[1] == '3') {
                         ++fmt;
                         if (fmt[1] != '2') {
@@ -79,7 +80,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM32;
+                        operands[arity++].tag = OPENASM_OP_IMM32;
                     } else if (fmt[1] == '6') {
                         ++fmt;
                         if (fmt[1] != '4') {
@@ -87,19 +88,19 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM64;
+                        operands[arity++].tag = OPENASM_OP_IMM64;
                     } else if (fmt[1] >= '0' && fmt[1] <= '9') {
                         fprintf(stderr, "error: invalid immediate bitwidth\n");
                         return 1;
                     } else {
                         fprintf(stderr, "warning: unspecified immediate bitwidth, defaulting to 32\n");
-                        operands[i].tag = OPENASM_OP_IMM32;
+                        operands[arity++].tag = OPENASM_OP_IMM32;
                     }
                 } break;
                 case 'm': {
                     struct OpenasmMemory mem = va_arg(args, struct OpenasmMemory);
-                    operands[i].tag = OPENASM_OP_MEMORY;
-                    operands[i].mem = mem;
+                    operands[arity].tag = OPENASM_OP_MEMORY;
+                    operands[arity++].mem = mem;
                 } break;
                 case 's': {
                     if (buf->symtable.len == buf->symtable.cap) {
@@ -119,7 +120,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     buf->symtable.table[buf->symtable.len].offset = 0;
                     buf->symtable.table[buf->symtable.len].addr = 0;
                     buf->symtable.table[buf->symtable.len++].rel = 0;
-                    operands[i].imm = 0;
+                    operands[arity].imm = 0;
                     if (fmt[1] == '1') {
                         ++fmt;
                         if (fmt[1] != '6') {
@@ -127,7 +128,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM16;
+                        operands[arity++].tag = OPENASM_OP_IMM16;
                     } else if (fmt[1] == '3') {
                         ++fmt;
                         if (fmt[1] != '2') {
@@ -135,7 +136,7 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM32;
+                        operands[arity++].tag = OPENASM_OP_IMM32;
                     } else if (fmt[1] == '6') {
                         ++fmt;
                         if (fmt[1] != '4') {
@@ -143,13 +144,13 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                             return 1;
                         }
                         ++fmt;
-                        operands[i].tag = OPENASM_OP_IMM64;
+                        operands[arity++].tag = OPENASM_OP_IMM64;
                     } else if (fmt[1] >= '0' && fmt[1] <= '9') {
                         fprintf(stderr, "error: invalid symbol bitwidth\n");
                         return 1;
                     } else {
                         fprintf(stderr, "warning: unspecified symbol bitwidth, defaulting to 64\n");
-                        operands[i].tag = OPENASM_OP_IMM64;
+                        operands[arity++].tag = OPENASM_OP_IMM64;
                     }
                 } break;
                 case 'p': {
@@ -170,8 +171,8 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     buf->symtable.table[buf->symtable.len].offset = 0;
                     buf->symtable.table[buf->symtable.len].addr = 0;
                     buf->symtable.table[buf->symtable.len++].rel = 1;
-                    operands[i].imm = 0;
-                    operands[i].tag = OPENASM_OP_IMM32;
+                    operands[arity].imm = 0;
+                    operands[arity++].tag = OPENASM_OP_IMM32;
                 } break;
                 default: {
                     fprintf(stderr, "error: invalid `openasm_instf` parameter: '%c'\n", *fmt);
@@ -194,10 +195,22 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
 
     va_end(args);
 
+    int tag;
+    if (arity == 0) {
+        tag = 0;
+    } else if (arity == 1) {
+        tag = OPENASM_CONS1(operands[0].tag);
+    } else {
+        tag = OPENASM_CONS2(operands[1].tag, operands[0].tag);
+    }
     for (struct OpenasmEntry *entry = openasm_inst; entry->mnem; entry++) {
         if (strcmp(mnemonic, entry->mnem) == 0) {
-            int tag = OPENASM_CONS2(operands[1].tag, operands[0].tag);
-            return entry->inst_table[tag](buf, operands);
+            int (*fn)(OpenasmBuffer *, OpenasmOperand *) = entry->inst_table[tag];
+            if (!fn) {
+                fprintf(stderr, "error: invalid combination of opcode and operands: \"%s\"\n", mnemonic);
+                return 1;
+            }
+            return fn(buf, operands);
         }
     }
     
