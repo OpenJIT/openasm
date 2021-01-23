@@ -1422,7 +1422,7 @@ int openasm_mullike_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *inst = start;
 
     inst = openasm_opcode1(buf, inst, opcode);
-    SET_REGISTER_RM(op[0].reg, regval, 16);
+    SET_REGISTER_RM(op[0].reg, regval, 32);
     
     return openasm_build(buf, start, inst);
 }
@@ -1437,7 +1437,7 @@ int openasm_mullike_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     R |= (op->aux & OPENASM_AUX_REXX)? OPENASM_PREFIX64_REXX : 0;
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
-    SET_REGISTER_RM(op[0].reg, regval, 16);
+    SET_REGISTER_RM(op[0].reg, regval, 64);
     
     return openasm_build(buf, start, inst);
 }
@@ -2364,31 +2364,47 @@ static int (*openasm_inst_cmp[])(OpenasmBuffer *, OpenasmOperand *) = {
 };
 
 static int (*openasm_inst_mul[])(OpenasmBuffer *, OpenasmOperand *) = {
-    [OPENASM_CONS2(OPENASM_OP_IMM8, OPENASM_OP_AL)] = openasm_mul_al_rm8,
-    [OPENASM_CONS2(OPENASM_OP_IMM16, OPENASM_OP_AX)] = openasm_mul_ax_rm16,
-    [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_EAX)] = openasm_mul_eax_rm32,
-    [OPENASM_CONS2(OPENASM_OP_IMM64, OPENASM_OP_RAX)] = openasm_mul_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_REG8)] = openasm_mul_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_REG16)] = openasm_mul_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_REG32)] = openasm_mul_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_REG64)] = openasm_mul_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY8)] = openasm_mul_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY16)] = openasm_mul_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY32)] = openasm_mul_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY64)] = openasm_mul_rax_rm64,
 };
 
 static int (*openasm_inst_imul[])(OpenasmBuffer *, OpenasmOperand *) = {
-    [OPENASM_CONS2(OPENASM_OP_IMM8, OPENASM_OP_AL)] = openasm_imul_al_rm8,
-    [OPENASM_CONS2(OPENASM_OP_IMM16, OPENASM_OP_AX)] = openasm_imul_ax_rm16,
-    [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_EAX)] = openasm_imul_eax_rm32,
-    [OPENASM_CONS2(OPENASM_OP_IMM64, OPENASM_OP_RAX)] = openasm_imul_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_REG8)] = openasm_imul_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_REG16)] = openasm_imul_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_REG32)] = openasm_imul_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_REG64)] = openasm_imul_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY8)] = openasm_imul_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY16)] = openasm_imul_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY32)] = openasm_imul_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY64)] = openasm_imul_rax_rm64,
 };
 
 static int (*openasm_inst_div[])(OpenasmBuffer *, OpenasmOperand *) = {
-    [OPENASM_CONS2(OPENASM_OP_IMM8, OPENASM_OP_AL)] = openasm_div_al_rm8,
-    [OPENASM_CONS2(OPENASM_OP_IMM16, OPENASM_OP_AX)] = openasm_div_ax_rm16,
-    [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_EAX)] = openasm_div_eax_rm32,
-    [OPENASM_CONS2(OPENASM_OP_IMM64, OPENASM_OP_RAX)] = openasm_div_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_REG8)] = openasm_div_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_REG16)] = openasm_div_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_REG32)] = openasm_div_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_REG64)] = openasm_div_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY8)] = openasm_div_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY16)] = openasm_div_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY32)] = openasm_div_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY64)] = openasm_div_rax_rm64,
 };
 
 static int (*openasm_inst_idiv[])(OpenasmBuffer *, OpenasmOperand *) = {
-    [OPENASM_CONS2(OPENASM_OP_IMM8, OPENASM_OP_AL)] = openasm_idiv_al_rm8,
-    [OPENASM_CONS2(OPENASM_OP_IMM16, OPENASM_OP_AX)] = openasm_idiv_ax_rm16,
-    [OPENASM_CONS2(OPENASM_OP_IMM32, OPENASM_OP_EAX)] = openasm_idiv_eax_rm32,
-    [OPENASM_CONS2(OPENASM_OP_IMM64, OPENASM_OP_RAX)] = openasm_idiv_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_REG8)] = openasm_idiv_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_REG16)] = openasm_idiv_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_REG32)] = openasm_idiv_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_REG64)] = openasm_idiv_rax_rm64,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY8)] = openasm_idiv_al_rm8,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY16)] = openasm_idiv_ax_rm16,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY32)] = openasm_idiv_eax_rm32,
+    [OPENASM_CONS1(OPENASM_OP_MEMORY64)] = openasm_idiv_rax_rm64,
 };
 
 static int (*openasm_inst_mov[])(OpenasmBuffer *, OpenasmOperand *) = {
