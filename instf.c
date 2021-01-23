@@ -368,6 +368,14 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
+    int result = openasm_instfv(buf, fmt, args);
+
+    va_end(args);
+
+    return result;
+}
+
+int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
     const char *input = fmt;
     
     while (*fmt == ' ' || *fmt == '\t') ++fmt;
@@ -750,8 +758,6 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
             ++fmt;
         }
     }
-
-    va_end(args);
 
     int tag;
     if (arity == 0) {

@@ -585,6 +585,7 @@ uint8_t *openasm_imm64(OpenasmBuffer *buf, uint8_t *ptr, uint64_t imm);
 int openasm_build(OpenasmBuffer *buf, uint8_t *start, uint8_t *end);
 
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...);
+int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args);
 uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr);
 uint64_t openasm_res(OpenasmBuffer *buf, size_t len);
 
