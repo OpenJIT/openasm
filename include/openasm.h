@@ -242,6 +242,7 @@ struct OpenasmRegister {
 #define OPENASM_R64_RBP 0x5
 #define OPENASM_R64_RSI 0x6
 #define OPENASM_R64_RDI 0x7
+/* (require REX.R, X or B) */
 #define OPENASM_R64_R8 0x0
 #define OPENASM_R64_R9 0x1
 #define OPENASM_R64_R10 0x2

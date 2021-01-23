@@ -398,31 +398,126 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                 ++fmt;
                 switch (*fmt) {
                 case '*': {
-                    operands[arity++] = va_arg(args, struct OpenasmOperand);
+                    int bext = 0;
+                    int iext = 0;
+                    OpenasmOperand op = va_arg(args, struct OpenasmOperand);
+                    if (op.tag == OPENASM_OP_REG8
+                        || op.tag == OPENASM_OP_REG16
+                        || op.tag == OPENASM_OP_REG32
+                        || op.tag == OPENASM_OP_REG64) {
+                        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+                            if (strcmp(op.reg, reg->key) == 0) {
+                                switch (reg->bits) {
+                                case 8:
+                                    ext[regs] = reg->ext;
+                                    break;
+                                case 16:
+                                    ext[regs] = reg->ext;
+                                    break;
+                                case 32:
+                                    ext[regs] = reg->ext;
+                                    break;
+                                case 64:
+                                    ext[regs] = reg->ext;
+                                    break;
+                                default:
+                                    /* unreachable */
+                                    break;
+                                }
+                                break;
+                            }
+                        }
+                    } else if (op.tag == OPENASM_OP_MEMORY8
+                        || op.tag == OPENASM_OP_MEMORY16
+                        || op.tag == OPENASM_OP_MEMORY32
+                        || op.tag == OPENASM_OP_MEMORY64) {
+                        for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+                            if (strcmp(op.mem.base, reg->key) == 0) {
+                                switch (reg->bits) {
+                                case 8:
+                                    bext = reg->ext;
+                                    break;
+                                case 16:
+                                    bext = reg->ext;
+                                    break;
+                                case 32:
+                                    bext = reg->ext;
+                                    break;
+                                case 64:
+                                    bext = reg->ext;
+                                    break;
+                                default:
+                                    /* unreachable */
+                                    break;
+                                }
+                                break;
+                            }
+                            if (op.mem.index && strcmp(op.mem.index, reg->key) == 0) {
+                                switch (reg->bits) {
+                                case 8:
+                                    iext = reg->ext;
+                                    break;
+                                case 16:
+                                    iext = reg->ext;
+                                    break;
+                                case 32:
+                                    iext = reg->ext;
+                                    break;
+                                case 64:
+                                    iext = reg->ext;
+                                    break;
+                                default:
+                                    /* unreachable */
+                                    break;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    operands[arity++] = op;
+                    if (bext) {
+                        operands[0].aux |= OPENASM_AUX_REXB;
+                    }
+                    if (iext) {
+                        operands[0].aux |= OPENASM_AUX_REXX;
+                    }
+                    if (regs == 0 && ext[regs]) {
+                        operands[0].aux |= OPENASM_AUX_REXR;
+                        ++regs;
+                    } else if (regs == 1 && ext[regs]) {
+                        operands[0].aux |= OPENASM_AUX_REXB;
+                        ++regs;
+                    } else {
+                        operands[0].aux |= OPENASM_AUX_NONE;
+                    }
                 } break;
                 case 'r': {
                     const char *target = va_arg(args, char *);
                     uint32_t tag = -1;
                     for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
                         if (strcmp(target, reg->key) == 0) {
-                            ext[regs] = reg->ext;
                             switch (reg->bits) {
                             case 8:
+                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG8;
                                 break;
                             case 16:
+                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG16;
                                 break;
                             case 32:
+                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG32;
                                 break;
                             case 64:
+                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG64;
                                 break;
                             default:
                                 /* unreachable */
                                 break;
                             }
+                            break;
                         }
                     }
                     operands[arity].tag = tag;
@@ -475,7 +570,57 @@ int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...) {
                     }
                 } break;
                 case 'm': {
+                    int bext = 0;
+                    int iext = 0;
                     struct OpenasmMemory mem = va_arg(args, struct OpenasmMemory);
+                    for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
+                        if (strcmp(mem.base, reg->key) == 0) {
+                            switch (reg->bits) {
+                            case 8:
+                                bext = reg->ext;
+                                break;
+                            case 16:
+                                bext = reg->ext;
+                                break;
+                            case 32:
+                                bext = reg->ext;
+                                break;
+                            case 64:
+                                bext = reg->ext;
+                                break;
+                            default:
+                                /* unreachable */
+                                break;
+                            }
+                            break;
+                        }
+                        if (mem.index && strcmp(mem.index, reg->key) == 0) {
+                            switch (reg->bits) {
+                            case 8:
+                                iext = reg->ext;
+                                break;
+                            case 16:
+                                iext = reg->ext;
+                                break;
+                            case 32:
+                                iext = reg->ext;
+                                break;
+                            case 64:
+                                iext = reg->ext;
+                                break;
+                            default:
+                                /* unreachable */
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                    if (bext) {
+                        operands[0].aux |= OPENASM_AUX_REXB;
+                    }
+                    if (iext) {
+                        operands[0].aux |= OPENASM_AUX_REXX;
+                    }
                     operands[arity].mem = mem;
                     if (fmt[1] == '8') {
                         ++fmt;
