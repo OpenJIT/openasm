@@ -483,6 +483,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                         }
                     }
                     operands[arity++] = op;
+                    operands[0].aux = 0;
                     if (bext) {
                         operands[0].aux |= OPENASM_AUX_REXB;
                     }

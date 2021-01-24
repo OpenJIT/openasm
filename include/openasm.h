@@ -543,7 +543,6 @@ struct OpenasmRegister {
 #define OPENASM_RET_NEAR 0xc3
 #define OPENASM_RET_FAR 0xcb
 
-#define OPENASM_JMP_SHORT 0xe8
 #define OPENASM_JMP_NEAR 0xe9
 
 #define OPENASM_JC_SHORT 0x72
@@ -562,6 +561,28 @@ struct OpenasmRegister {
 #define OPENASM_JGE_NEAR 0x8d
 #define OPENASM_JL_NEAR 0x8c
 #define OPENASM_JLE_NEAR 0x8e
+
+typedef void (*openasm_buffer_f)(OpenasmBuffer *buf);
+typedef void (*openasm_del_buffer_f)(OpenasmBuffer *buf);
+typedef int (*openasm_instf_f)(OpenasmBuffer *buf, const char *fmt, ...);
+typedef int (*openasm_instfv_f)(OpenasmBuffer *buf, const char *fmt, va_list args);
+typedef uint64_t (*openasm_data_f)(OpenasmBuffer *buf, size_t len, void *ptr);
+typedef uint64_t (*openasm_res_f)(OpenasmBuffer *buf, size_t len);
+typedef void (*openasm_section_f)(OpenasmBuffer *buf, const char *section);
+    
+typedef uint64_t (*openasm_addr_of_f)(OpenasmBuffer *buf, uint8_t *inst);
+typedef uint64_t (*openasm_current_addr_f)(OpenasmBuffer *buf);
+typedef bool (*openasm_symbol_f)(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr);
+typedef int (*openasm_link_f)(OpenasmBuffer *buf);
+typedef int (*openasm_elfdump_f)(FILE *fileout, int flags, OpenasmBuffer *buf);
+
+typedef OpenasmProc (*openasm_jit_proc_f)(OpenasmBuffer *buf);
+typedef OpenasmFni (*openasm_jit_fni_f)(OpenasmBuffer *buf);
+typedef OpenasmFnl (*openasm_jit_fnl_f)(OpenasmBuffer *buf);
+typedef OpenasmFnll (*openasm_jit_fnll_f)(OpenasmBuffer *buf);
+typedef OpenasmFnf (*openasm_jit_fnf_f)(OpenasmBuffer *buf);
+typedef OpenasmFnd (*openasm_jit_fnd_f)(OpenasmBuffer *buf);
+typedef OpenasmFnvp (*openasm_jit_fnvp_f)(OpenasmBuffer *buf);
 
 void openasm_buffer(OpenasmBuffer *buf);
 void openasm_del_buffer(OpenasmBuffer *buf);

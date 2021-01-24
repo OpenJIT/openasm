@@ -2057,22 +2057,11 @@ int openasm_ret_far(OpenasmBuffer *buf, OpenasmOperand *op) {
     return openasm_build(buf, start, inst);
 }
 
-
-int openasm_jmp_short(OpenasmBuffer *buf, OpenasmOperand *op) {
-    uint8_t *start = openasm_new(buf);
-    uint8_t *inst = start;
-
-    inst = openasm_opcode1(buf, inst, OPENASM_JMP_SHORT);
-
-    inst = openasm_imm8(buf, inst, op[0].imm);
-    return openasm_build(buf, start, inst);
-}
-
 int openasm_jmp_near(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    inst = openasm_opcode1(buf, inst, OPENASM_JMP_SHORT);
+    inst = openasm_opcode1(buf, inst, OPENASM_JMP_NEAR);
 
     inst = openasm_imm32(buf, inst, op[0].imm);
     return openasm_build(buf, start, inst);
