@@ -1,6 +1,7 @@
 *.o
-/run_test
-/libopenasm.so
+a.out
+run_test
+*.so
 *~
 .#*
 #*#
