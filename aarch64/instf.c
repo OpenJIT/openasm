@@ -5,14 +5,13 @@
 uint8_t strtoreg(const char *ptr) {
     // sanity check for null
     if (!*ptr) return 0xff;
-    // sanity check for length
-    if (strlen(ptr) > 3) return 0xff;
     // named register checks
     if (strcmp(ptr, "fp") == 0) return 0x1d;
     if (strcmp(ptr, "lr") == 0) return 0x1e;
-    if (strcmp(ptr, "xzr") == 0) return 0x1f;
-    if (strcmp(ptr, "wzr") == 0) return 0x1f;
+    if (strcmp(ptr, "zr") == 0) return 0x1f;
     if (strcmp(ptr, "sp") == 0) return 0x1f;
+    // sanity check for length
+    if (strlen(ptr) > 2) return 0xff;
     uint8_t reg = 0;
     while (*ptr) {
 	if (*ptr >= '0' && *ptr <= '9') {
@@ -54,14 +53,14 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
     uint8_t tag = 0;
     size_t bits = 0;
     size_t regc = 0;
-    uint8_t regv[3] = {0x1f, 0x1f, 0x1f}; // RZR
+    uint8_t regv[3] = {0x1f, 0x1f, 0x1f}; // xzr
     size_t immc = 0;
     uint32_t immv[3] = {0, 0, 0};
     
     while (*fmt == ' ' || *fmt == '\t') ++fmt;
     ptr = fmt;
 
-    for (size_t i = 0; i < 8; i++) {
+    for (size_t i = 0; i < 6; i++) {
         while (*fmt) {
             if (*fmt == ' ' || *fmt == '\t') {
                 ++fmt;
@@ -82,9 +81,19 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 			bits = 32;
 			uint8_t reg = strtoreg(target + 1);
 			if (reg > 0x1f) {
-			    fprintf(stderr, "error: invalid registers: w%u\n", (uint32_t) reg);
+			    fprintf(stderr, "error: invalid registers: %s\n", target);
 			    return 1;
 			}
+			regv[regc++] = reg;
+		    } else if (strcmp(target, "fp") == 0
+			       || strcmp(target, "lr") == 0
+			       || strcmp(target, "sp") == 0) {
+			if (bits && bits != 64) {
+			    fprintf(stderr, "error: cannot mix 32 and 64 bit registers\n");
+			    return 1;
+			}
+			bits = 64;
+			uint8_t reg = strtoreg(target);
 			regv[regc++] = reg;
 		    } else if (target[0] == 'x') {
 			if (bits && bits != 64) {
@@ -94,19 +103,17 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 			bits = 64;
 			uint8_t reg = strtoreg(target + 1);
 			if (reg > 0x1f) {
-			    fprintf(stderr, "error: invalid registers: x%u\n", (uint32_t) reg);
+			    fprintf(stderr, "error: invalid registers: %s\n", target);
 			    return 1;
 			}
 			regv[regc++] = reg;
 		    }
-		    // TODO
                 } break;
                 case 'i': {
 		    tag <<= 1;
 		    tag |= OPENASM_OP_IMM;
                     uint32_t imm = va_arg(args, uint32_t);
 		    immv[immc++] = imm;
-		    // TODO
                 } break;
                 default: {
                     fprintf(stderr, "error: invalid `openasm_instf` parameter: '%c'\n", *fmt);

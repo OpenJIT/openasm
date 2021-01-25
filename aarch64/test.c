@@ -8,9 +8,9 @@ int main() {
     OpenasmBuffer buf;
     openasm_buffer(&buf);
     const char *reg0 = "x19";
-    status |= openasm_instf(&buf, "mov %r, %i, %i", reg0, 42, 0);
+    status |= openasm_instf(&buf, "mov %r, %i", reg0, 42);
     status |= openasm_instf(&buf, "add %r, %r, %i", "x0", reg0, 69);
-    status |= openasm_instf(&buf, "ret %r", "x30");
+    status |= openasm_instf(&buf, "ret %r", "lr");
 
     if (status) {
         return status;
@@ -20,9 +20,9 @@ int main() {
     openasm_rawdump(fileout, &buf);
     fclose(fileout);
 
-    /* OpenasmFni fn = openasm_jit_fni(&buf); */
-    /* int i = fn(); */
-    /* printf("%d\n", i); */
+    OpenasmFni fn = openasm_jit_fni(&buf);
+    int i = fn();
+    printf("%d\n", i);
     
     return 0;
 }

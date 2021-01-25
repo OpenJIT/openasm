@@ -8,7 +8,7 @@ TEST:=run_test
 TESTSRC:=test.c
 SRC:=lib.c jit.c instf.c link.c
 OBJ:=lib.o jit.o instf.o link.o
-INC:=$(INCDIR)/openasm.h
+INC:=$(INCDIR)/openasm.h $(INCDIR)/aarch64.h
 
 CFLAGS:=-g -ggdb -Wall -Wextra -pedantic -std=c11 -D_GNU_SOURCE=1 -fPIC -I..
 LDFLAGS:=
