@@ -69,6 +69,16 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
             if (*fmt == '%') {
                 ++fmt;
                 switch (*fmt) {
+		case '*': {
+		    OpenasmOperand op = va_arg(args, OpenasmOperand);
+		    tag <<= 1;
+		    tag |= op.tag;
+		    if (op.tag == OPENASM_OP_REG) {
+			regv[regc++] = op.reg;
+		    } else /* if (op.tag == OPENASM_OP_IMM) */ {
+			immv[immc++] = op.imm;
+		    }y
+		} break;
                 case 'r': {
 		    tag <<= 1;
 		    tag |= OPENASM_OP_REG;

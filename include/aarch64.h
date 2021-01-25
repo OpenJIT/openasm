@@ -7,7 +7,7 @@
 
 typedef struct OpenasmBuffer OpenasmBuffer;
 typedef struct OpenasmProperty OpenasmProperty;
-typedef struct OpenasmOperand OpenasmOperand;
+typedef union OpenasmOperand OpenasmOperand;
 
 struct OpenasmSection {
     const char *name;
@@ -33,10 +33,26 @@ struct OpenasmEntry {
     int (**inst_table)(/* OpenasmBuffer * */);
 };
 
+enum {
+    OPENASM_OP_REG,
+    OPENASM_OP_IMM,
+};
+
+union OpenasmOperand {
+    uint32_t tag;
+    uint64_t bytes;
+    struct {
+	uint32_t _pad1;
+	uint8_t reg;
+    };
+    struct {
+	uint32_t _pad2;
+	uint32_t imm;
+    };
+};
+
 /* useful defines */
 #define OPENASM_MAX_SIZE 4
-#define OPENASM_OP_REG 0
-#define OPENASM_OP_IMM 1
 #define OPENASM_OPSIZE(s) ((s >> 5) & ((uint32_t) 0x3))
 #define OPENASM_OPMASK ((uint32_t) 0x3f)
 #define OPENASM_MASKOP(x) (x & OPENASM_OPMASK)
@@ -293,6 +309,7 @@ struct OpenasmEntry {
 /* NOTE: skipped */
 
 /* function declarations */
+// NOTE: should void.h also declare openasm_buffer and openasm_del_buffer?
 void openasm_buffer(OpenasmBuffer *buf);
 void openasm_del_buffer(OpenasmBuffer *buf);
 

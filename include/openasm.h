@@ -62,20 +62,29 @@ struct OpenasmSymbolTable {
 
 #if defined(OPENASM_ARCH_AMD64)
 
-#if defined(OPENASM_ARCH_AARCH64)
+#if defined(OPENASM_ARCH_AARCH64) || defined(OPENASM_ARCH_VOID)
 #error "cannot include more than 1 architecture"
-#endif /* OPENASM_ARCH_AARCH64) */
+#endif /* OPENASM_ARCH_AARCH64 || .. */
 
 #include "amd64.h"
 #endif /* OPENASM_ARCH_AMD64 */
 
 #if defined(OPENASM_ARCH_AARCH64)
 
-#if defined(OPENASM_ARCH_AMD64)
+#if defined(OPENASM_ARCH_AMD64) || defined(OPENASM_ARCH_VOID)
 #error "cannot include more than 1 architecture"
-#endif /* OPENASM_ARCH_AMD64) */
+#endif /* OPENASM_ARCH_AMD64 || .. */
 
 #include "aarch64.h"
 #endif /* OPENASM_ARCH_AARCH64 */
+
+#if defined(OPENASM_ARCH_VOID)
+
+#if defined(OPENASM_ARCH_AMD64) || defined(OPENASM_ARCH_AARCH64)
+#error "cannot include more than 1 architecture"
+#endif /* OPENASM_ARCH_AMD64 || .. */
+
+#include "void.h"
+#endif /* OPENASM_ARCH_VOID */
 
 #endif /* OPENASM_H */
