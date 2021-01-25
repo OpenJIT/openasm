@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#define OPENASM_ARCH_AMD64 1
 #include "include/openasm.h"
 
 #define DEFAULT_BUFFER_CAP ((size_t) 16384)
@@ -81,6 +82,30 @@ int openasm_link(OpenasmBuffer *buf) {
         }
     }
     return status;
+}
+
+int openasm_rawdump(FILE *fileout, OpenasmBuffer *buf) {
+    openasm_section(buf, "text");
+    size_t text_size = buf->sections[buf->section].len;
+    void *text_ptr = buf->sections[buf->section].buffer;
+    openasm_section(buf, "data");
+    size_t data_size = buf->sections[buf->section].len;
+    void *data_ptr = buf->sections[buf->section].buffer;
+    openasm_section(buf, "rodata");
+    size_t rodata_size = buf->sections[buf->section].len;
+    void *rodata_ptr = buf->sections[buf->section].buffer;
+    openasm_section(buf, "bss");
+    size_t bss_size = buf->sections[buf->section].len;
+    void *bss_ptr = buf->sections[buf->section].buffer;
+    
+    fwrite(text_ptr, 1, text_size, fileout);
+    fwrite(rodata_ptr, 1, rodata_size, fileout);
+    fwrite(data_ptr, 1, data_size, fileout);
+    fwrite(bss_ptr, 1, bss_size, fileout);
+
+    /* fchmod(fileno(fileout), 0755); */
+
+    return 0;
 }
 
 // this function was written with the help of `dumpelf` from `pax-utils`

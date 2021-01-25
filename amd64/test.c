@@ -1,4 +1,5 @@
 #include <errno.h>
+#define OPENASM_ARCH_AMD64 1
 #include "include/openasm.h"
 
 int main() {

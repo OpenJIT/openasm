@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#define OPENASM_ARCH_AMD64 1
 #include "include/openasm.h"
 
 static size_t openasm_opsize(int tag) {

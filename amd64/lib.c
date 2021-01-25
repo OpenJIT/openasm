@@ -1,3 +1,4 @@
+#define OPENASM_ARCH_AMD64 1
 #include "include/openasm.h"
 
 #define DEFAULT_SECTION_CAP ((size_t) 32)

@@ -1,40 +1,23 @@
-CC:=gcc
-AS:=as
+.PHONY: all clean mrproper aarch64/test amd64/test
 
-INCDIR:=include
-BIN:=libopenasm.so
-TEST:=run_test
+all: aarch64/libopenasm_aarch64.so amd64/libopenasm_amd64.so
 
-TESTSRC:=test.c
-SRC:=lib.c jit.c instf.c link.c
-OBJ:=lib.o jit.o instf.o link.o
-INC:=$(INCDIR)/openasm.h
+aarch64/libopenasm_aarch64.so:
+	make -C aarch64
 
-CFLAGS:=-g -ggdb -Wall -Wextra -pedantic -std=c11 -D_GNU_SOURCE=1 -fPIC
-LDFLAGS:=
-ASFLAGS:=
+amd64/libopenasm_amd64.so:
+	make -C amd64
 
-.PHONY: all build clean mrproper
+aarch64/test:
+	make -C aarch64 test
 
-all: $(BIN)
-
-build: $(BIN)
-
-test: $(TEST)
-	LD_LIBRARY_PATH=. ./$(TEST)
-
-$(TEST): $(TESTSRC) $(BIN)
-	$(CC) -o $@ $(CFLAGS) $(TESTSRC) $(LDFLAGS) -L. -lopenasm
-
-$(BIN): $(OBJ) $(INC)
-	$(CC) -shared -o $(BIN) $(OBJ) $(LDFLAGS)
-
-$(OBJ): %.o: %.c $(INC)
-	$(CC) -c -o $@ $< $(CFLAGS)
+amd64/test:
+	make -C amd64 test
 
 clean:
-	rm -rf $(OBJ)
+	make -C aarch64 clean
+	make -C amd64 clean
 
 mrproper: clean
-	rm -rf $(BIN)
-	rm -rf $(TEST)
+	make -C aarch64 mrproper
+	make -C amd64 mrproper

@@ -1,7 +1,9 @@
 #include <sys/mman.h>
 #include <errno.h>
+#define OPENASM_ARCH_AARCH64 1
 #include "include/openasm.h"
 
+// TODO: should we merge this with amd64/jit.c and make it architecture agnostic?
 // TODO: .data, .bss and other sections
 OpenasmProc openasm_jit_proc(OpenasmBuffer *buf) {
     openasm_section(buf, "text");
@@ -15,7 +17,7 @@ OpenasmProc openasm_jit_proc(OpenasmBuffer *buf) {
         return NULL;
     }
     
-    memcpy(addr, buf->sections[buf->section].buffer, buf->sections[buf->section].len);
+    memcpy(addr, buf->sections[buf->section].buffer, buf->sections[buf->section].len * sizeof(uint32_t));
     
     status = mprotect(addr, buf->sections[buf->section].len, PROT_READ | PROT_EXEC);
     if (status == -1) {
