@@ -113,7 +113,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     unsigned char class = ELFCLASS64;
     unsigned char data = ELFDATA2LSB;
     unsigned char version = EV_CURRENT;
-    unsigned char osabi = ELFOSABI_SYSV;
+    unsigned char osabi = ELFOSABI_NONE;
     unsigned char abiversion = 0;
     Elf64_Half type;
     if ((flags & OPENASM_ELF_TYPE) == OPENASM_ELF_CORE) {
@@ -140,7 +140,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             .e_type      = type       ,
             .e_machine   = machine    ,
             .e_version   = 1          ,
-            .e_entry     = 0x4000     , /* (start address at runtime) */
+            .e_entry     = 0x400000   , /* (start address at runtime) */
             .e_phoff     = 0          , /* (bytes into file) */
             .e_shoff     = 0          , /* (bytes into file) */
             .e_flags     = 0x0        ,
@@ -152,14 +152,14 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             .e_shstrndx  = 5        
         },
         .phdrs = {
-            // (nul)
+            // (elf and program headers)
             {
                 .p_type   = PT_LOAD    ,
                 .p_offset = 0          , /* (bytes into file) */
-                .p_vaddr  = 0x0        , /* (virtual addr at runtime) */
-                .p_paddr  = 0x0        , /* (physical addr at runtime) */
-                .p_filesz = 0          , /* (bytes in file) */
-                .p_memsz  = 0          , /* (bytes in mem at runtime) */
+                .p_vaddr  = 0x400000   , /* (virtual addr at runtime) */
+                .p_paddr  = 0x400000   , /* (physical addr at runtime) */
+                .p_filesz = 344        , /* (bytes in file) */
+                .p_memsz  = 344        , /* (bytes in mem at runtime) */
                 .p_flags  = PF_R       ,
                 .p_align  = 4096       , /* (min mem alignment in bytes) */
             },
@@ -167,45 +167,45 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             {
                 .p_type   = PT_LOAD    ,
                 .p_offset = 0          , /* (bytes into file) */
-                .p_vaddr  = 0x4000     , /* (virtual addr at runtime) */
-                .p_paddr  = 0x4000     , /* (physical addr at runtime) */
+                .p_vaddr  = 0x400000   , /* (virtual addr at runtime) */
+                .p_paddr  = 0x400000   , /* (physical addr at runtime) */
                 .p_filesz = 0          , /* (bytes in file) */
                 .p_memsz  = 0          , /* (bytes in mem at runtime) */
                 .p_flags  = PF_R | PF_X,
-                .p_align  = 4096       , /* (min mem alignment in bytes) */
+                .p_align  = 16         , /* (min mem alignment in bytes) */
             },
             // .rodata
             {
                 .p_type   = PT_LOAD    ,
                 .p_offset = 0          , /* (bytes into file) */
-                .p_vaddr  = 0xB000     , /* (virtual addr at runtime) */
-                .p_paddr  = 0xB000     , /* (physical addr at runtime) */
+                .p_vaddr  = 0x400000   , /* (virtual addr at runtime) */
+                .p_paddr  = 0x400000   , /* (physical addr at runtime) */
                 .p_filesz = 0          , /* (bytes in file) */
                 .p_memsz  = 0          , /* (bytes in mem at runtime) */
                 .p_flags  = PF_R       ,
-                .p_align  = 4096       , /* (min mem alignment in bytes) */
+                .p_align  = 16         , /* (min mem alignment in bytes) */
             },
-            // .bss
+            // .data
             {
-                .p_type   = PT_DYNAMIC ,
+                .p_type   = PT_LOAD    ,
                 .p_offset = 0          , /* (bytes into file) */
-                .p_vaddr  = 0xDDE8     , /* (virtual addr at runtime) */
-                .p_paddr  = 0xDDE8     , /* (physical addr at runtime) */
+                .p_vaddr  = 0x400000   , /* (virtual addr at runtime) */
+                .p_paddr  = 0x400000   , /* (physical addr at runtime) */
                 .p_filesz = 0          , /* (bytes in file) */
                 .p_memsz  = 0          , /* (bytes in mem at runtime) */
                 .p_flags  = PF_R | PF_W,
-                .p_align  = 8          , /* (min mem alignment in bytes) */
+                .p_align  = 16         , /* (min mem alignment in bytes) */
             },
-            // .stack
+            // .bss
             {
-                .p_type   = PT_GNU_STACK,
-                .p_offset = 0           , /* (bytes into file) */
-                .p_vaddr  = 0x0         , /* (virtual addr at runtime) */
-                .p_paddr  = 0x0         , /* (physical addr at runtime) */
-                .p_filesz = 0           , /* (bytes in file) */
-                .p_memsz  = 0           , /* (bytes in mem at runtime) */
-                .p_flags  = PF_R | PF_W ,
-                .p_align  = 16          , /* (min mem alignment in bytes) */
+                .p_type   = PT_LOAD    ,
+                .p_offset = 0          , /* (bytes into file) */
+                .p_vaddr  = 0x400000   , /* (virtual addr at runtime) */
+                .p_paddr  = 0x400000   , /* (physical addr at runtime) */
+                .p_filesz = 0          , /* (bytes in file) */
+                .p_memsz  = 128        , /* (bytes in mem at runtime) */
+                .p_flags  = PF_R | PF_W,
+                .p_align  = 16         , /* (min mem alignment in bytes) */
             },
         },
 
@@ -224,10 +224,10 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             },
             // .text
             {
-                .sh_name      = 1           ,
+                .sh_name      = 0           ,
                 .sh_type      = SHT_PROGBITS,
                 .sh_flags     = 6           ,
-                .sh_addr      = 0x4520      ,
+                .sh_addr      = 0x400000    ,
                 .sh_offset    = 0           , /* (bytes) */
                 .sh_size      = 0           , /* (bytes) */
                 .sh_link      = 0           ,
@@ -237,10 +237,10 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             },
             // .rodata
             {
-                .sh_name      = 2           ,
+                .sh_name      = 0           ,
                 .sh_type      = SHT_PROGBITS,
                 .sh_flags     = 2           ,
-                .sh_addr      = 0xB000      ,
+                .sh_addr      = 0x400000    ,
                 .sh_offset    = 0           , /* (bytes) */
                 .sh_size      = 0           , /* (bytes) */
                 .sh_link      = 0           ,
@@ -250,10 +250,10 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             },
             // .data
             {
-                .sh_name      = 3           ,
+                .sh_name      = 0           ,
                 .sh_type      = SHT_PROGBITS,
                 .sh_flags     = 3           ,
-                .sh_addr      = 0xE160      ,
+                .sh_addr      = 0x400000    ,
                 .sh_offset    = 0           , /* (bytes) */
                 .sh_size      = 0           , /* (bytes) */
                 .sh_link      = 0           ,
@@ -263,10 +263,10 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             },
             // .bss
             {
-                .sh_name      = 4          ,
+                .sh_name      = 0          ,
                 .sh_type      = SHT_NOBITS ,
                 .sh_flags     = 3          ,
-                .sh_addr      = 0xF7A0     ,
+                .sh_addr      = 0x400000   ,
                 .sh_offset    = 0          , /* (bytes) */
                 .sh_size      = 128        , /* (bytes) */
                 .sh_link      = 0          ,
@@ -276,7 +276,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             },
             // .shstrtab
             {
-                .sh_name      = 5          ,
+                .sh_name      = 0          ,
                 .sh_type      = SHT_STRTAB ,
                 .sh_flags     = 0          ,
                 .sh_addr      = 0x0        ,
@@ -291,28 +291,23 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     };
 
     size_t phdr_offset = offsetof(struct OpenasmElf, phdrs);
-    size_t shdr_offset = offsetof(struct OpenasmElf, shdrs);
-    
-    size_t nul_offset = sizeof(struct OpenasmElf);
-    size_t nul_size = 0;
-    void *nul_ptr = NULL;
+
     openasm_section(buf, "text");
-    size_t text_offset = nul_offset + nul_size;
+    size_t text_offset = openasm_align_up(offsetof(struct OpenasmElf, shdrs), 16);
     size_t text_size = buf->sections[buf->section].len;
     void *text_ptr = buf->sections[buf->section].buffer;
     openasm_section(buf, "data");
-    size_t data_offset = text_offset + text_size;
+    size_t data_offset = openasm_align_up(text_offset + text_size, 16);
     size_t data_size = buf->sections[buf->section].len;
     void *data_ptr = buf->sections[buf->section].buffer;
     openasm_section(buf, "rodata");
-    size_t rodata_offset = data_offset + data_size;
+    size_t rodata_offset = openasm_align_up(data_offset + data_size, 16);
     size_t rodata_size = buf->sections[buf->section].len;
     void *rodata_ptr = buf->sections[buf->section].buffer;
     openasm_section(buf, "bss");
-    size_t bss_offset = rodata_offset + rodata_size;
+    size_t bss_offset = openasm_align_up(rodata_offset + rodata_size, 16);
     size_t bss_size = buf->sections[buf->section].len;
-    void *bss_ptr = buf->sections[buf->section].buffer;
-    
+
     const char *shstrtab =
         "\0" // 0
         ".text\0" // 1
@@ -320,56 +315,93 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
         ".data\0" // 15
         ".bss\0" // 21
         ".shstrtab\0"; // 26
-    size_t shstrtab_offset = bss_offset + bss_size;
+    size_t shstrtab_offset = openasm_align_up(bss_offset + bss_size, 16);
     size_t shstrtab_size = 36;
     const void *shstrtab_ptr = shstrtab;
+    
+    size_t shdr_offset = openasm_align_up(shstrtab_offset + shstrtab_size, 16);
+    size_t shdr_size = sizeof(struct OpenasmElf) - offsetof(struct OpenasmElf, shdrs);
+    size_t size_dt_shdr = offsetof(struct OpenasmElf, shdrs);
 
     elf.ehdr.e_phoff = phdr_offset;
     elf.ehdr.e_shoff = shdr_offset;
 
     elf.shdrs[0].sh_name = 0;
-    
+
+    elf.ehdr.e_entry += text_offset;
     elf.phdrs[1].p_offset = text_offset;
+    elf.phdrs[1].p_vaddr += text_offset;
+    elf.phdrs[1].p_paddr += text_offset;
     elf.phdrs[1].p_filesz = text_size;
     elf.phdrs[1].p_memsz = text_size;
     elf.shdrs[1].sh_name = 1;
     elf.shdrs[1].sh_offset = text_offset;
+    elf.shdrs[1].sh_addr += text_offset;
     elf.shdrs[1].sh_size = text_size;
     
     elf.phdrs[2].p_offset = rodata_offset;
+    elf.phdrs[2].p_vaddr += rodata_offset;
+    elf.phdrs[2].p_paddr += rodata_offset;
     elf.phdrs[2].p_filesz = rodata_size;
     elf.phdrs[2].p_memsz = rodata_size;
     elf.shdrs[2].sh_name = 7;
     elf.shdrs[2].sh_offset = rodata_offset;
+    elf.shdrs[2].sh_addr += rodata_offset;
     elf.shdrs[2].sh_size = rodata_size;
     
     elf.phdrs[3].p_offset = data_offset;
+    elf.phdrs[3].p_vaddr += data_offset;
+    elf.phdrs[3].p_paddr += data_offset;
     elf.phdrs[3].p_filesz = data_size;
     elf.phdrs[3].p_memsz = data_size;
     elf.shdrs[3].sh_name = 15;
     elf.shdrs[3].sh_offset = data_offset;
+    elf.shdrs[3].sh_addr += data_offset;
     elf.shdrs[3].sh_size = data_size;
     
     elf.phdrs[4].p_offset = bss_offset;
-    elf.phdrs[4].p_filesz = bss_size;
+    elf.phdrs[4].p_vaddr += bss_offset;
+    elf.phdrs[4].p_paddr += bss_offset;
+    elf.phdrs[4].p_filesz = 0;
     elf.phdrs[4].p_memsz = bss_size;
     elf.shdrs[4].sh_name = 21;
     elf.shdrs[4].sh_offset = bss_offset;
+    elf.shdrs[4].sh_addr += bss_offset;
     elf.shdrs[4].sh_size = bss_size;
     
     elf.shdrs[5].sh_name = 26;
     elf.shdrs[5].sh_offset = shstrtab_offset;
+    elf.shdrs[5].sh_addr += shstrtab_offset;
     elf.shdrs[5].sh_size = shstrtab_size;
 
-    fwrite(&elf, 1, sizeof(struct OpenasmElf), fileout);
-    fwrite(nul_ptr, 1, nul_size, fileout);
-    fwrite(text_ptr, 1, text_size, fileout);
-    fwrite(rodata_ptr, 1, rodata_size, fileout);
-    fwrite(data_ptr, 1, data_size, fileout);
-    fwrite(bss_ptr, 1, bss_size, fileout);
-    fwrite(shstrtab_ptr, 1, shstrtab_size, fileout);
+    uint8_t padding[16];
 
-    /* fchmod(fileno(fileout), 0755); */
+    size_t count = 0;
+    size_t pad = 0;
+
+    count += fwrite(&elf, 1, size_dt_shdr, fileout);
+
+    pad = text_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(text_ptr, 1, text_size, fileout);
+    
+    pad = rodata_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(rodata_ptr, 1, rodata_size, fileout);
+    
+    pad = data_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(data_ptr, 1, data_size, fileout);
+
+    pad = shstrtab_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(shstrtab_ptr, 1, shstrtab_size, fileout);
+    
+    pad = shdr_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(&elf.shdrs, 1, shdr_size, fileout);
+
+    fchmod(fileno(fileout), 0755);
 
     return 0;
 }

@@ -19,6 +19,9 @@
     } while (0)
 #define openasm_assert(x) openasm_assertf(x, "%s", openasm_stringify(x))
 
+#define openasm_align_down(x, align) ((x) & ~((align) - 1))
+#define openasm_align_up(x, align) openasm_align_down((x) + (align) - 1, align)
+
 // jit procedure types
 typedef void (*OpenasmProc)();
 typedef int (*OpenasmFni)();
@@ -86,5 +89,27 @@ struct OpenasmSymbolTable {
 
 #include "void.h"
 #endif /* OPENASM_ARCH_VOID */
+
+typedef void (*openasm_buffer_f)(OpenasmBuffer *buf);
+typedef void (*openasm_del_buffer_f)(OpenasmBuffer *buf);
+typedef int (*openasm_instf_f)(OpenasmBuffer *buf, const char *fmt, ...);
+typedef int (*openasm_instfv_f)(OpenasmBuffer *buf, const char *fmt, va_list args);
+typedef uint64_t (*openasm_data_f)(OpenasmBuffer *buf, size_t len, void *ptr);
+typedef uint64_t (*openasm_res_f)(OpenasmBuffer *buf, size_t len);
+typedef void (*openasm_section_f)(OpenasmBuffer *buf, const char *section);
+    
+typedef uint64_t (*openasm_addr_of_f)(OpenasmBuffer *buf, uint8_t *inst);
+typedef uint64_t (*openasm_current_addr_f)(OpenasmBuffer *buf);
+typedef bool (*openasm_symbol_f)(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr);
+typedef int (*openasm_link_f)(OpenasmBuffer *buf);
+typedef int (*openasm_elfdump_f)(FILE *fileout, int flags, OpenasmBuffer *buf);
+
+typedef OpenasmProc (*openasm_jit_proc_f)(OpenasmBuffer *buf);
+typedef OpenasmFni (*openasm_jit_fni_f)(OpenasmBuffer *buf);
+typedef OpenasmFnl (*openasm_jit_fnl_f)(OpenasmBuffer *buf);
+typedef OpenasmFnll (*openasm_jit_fnll_f)(OpenasmBuffer *buf);
+typedef OpenasmFnf (*openasm_jit_fnf_f)(OpenasmBuffer *buf);
+typedef OpenasmFnd (*openasm_jit_fnd_f)(OpenasmBuffer *buf);
+typedef OpenasmFnvp (*openasm_jit_fnvp_f)(OpenasmBuffer *buf);
 
 #endif /* OPENASM_H */

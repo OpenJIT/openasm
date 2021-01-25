@@ -10,13 +10,11 @@ int main() {
     const char *reg0 = "r8";
     const char *reg1 = "r9";
     /* uint64_t _start = openasm_current_addr(&buf); */
-    status |= openasm_instf(&buf, "push %r", "rbp");
-    status |= openasm_instf(&buf, "mov %r, %r", "rbp", "rsp");
-    status |= openasm_instf(&buf, "sub %r, %i32", "rsp", 8);
+    status |= openasm_instf(&buf, "mov %r, %i64", "rbp", 0);
     status |= openasm_instf(&buf, "call %p", "text", "fun");
-    status |= openasm_instf(&buf, "mov %r, %r", "rsp", "rbp");
-    status |= openasm_instf(&buf, "pop %r", "rbp");
-    status |= openasm_instf(&buf, "ret");
+    status |= openasm_instf(&buf, "mov %r, %i64", "rdi", 0);
+    status |= openasm_instf(&buf, "mov %r, %i64", "rax", 60);
+    status |= openasm_instf(&buf, "syscall");
 
     uint64_t fun = openasm_current_addr(&buf);
     status |= openasm_instf(&buf, "mov %r, %i64", reg0, 42);
@@ -32,7 +30,7 @@ int main() {
         return status;
     }
 
-    FILE *fileout = fopen("test", "w");
+    FILE *fileout = fopen("a.out", "w");
     openasm_elfdump(fileout, OPENASM_ELF_EXEC, &buf);
     fclose(fileout);
 

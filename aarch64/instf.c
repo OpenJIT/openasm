@@ -77,7 +77,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 			regv[regc++] = op.reg;
 		    } else /* if (op.tag == OPENASM_OP_IMM) */ {
 			immv[immc++] = op.imm;
-		    }y
+		    }
 		} break;
                 case 'r': {
 		    tag <<= 1;

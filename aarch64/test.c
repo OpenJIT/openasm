@@ -10,14 +10,16 @@ int main() {
     const char *reg0 = "x19";
     status |= openasm_instf(&buf, "mov %r, %i", reg0, 42);
     status |= openasm_instf(&buf, "add %r, %r, %i", "x0", reg0, 69);
-    status |= openasm_instf(&buf, "ret %r", "lr");
+    status |= openasm_instf(&buf, "mov %r, %i", "x8", 0x5d);
+    status |= openasm_instf(&buf, "mov %r, %i", "x0", 0);
+    status |= openasm_instf(&buf, "svc %i", 0);
 
     if (status) {
         return status;
     }
 
     FILE *fileout = fopen("a.out", "w");
-    openasm_rawdump(fileout, &buf);
+    openasm_elfdump(fileout, OPENASM_ELF_EXEC, &buf);
     fclose(fileout);
 
     OpenasmFni fn = openasm_jit_fni(&buf);
