@@ -52,7 +52,7 @@ uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr) {
     uint32_t *dest = buffer + buf->sections[buf->section].len;
     memcpy(dest, ptr, len);
     buf->sections[buf->section].len += len;
-    
+
     return (uint64_t) dest - (uint64_t) buffer;
 }
 
@@ -66,7 +66,7 @@ uint64_t openasm_res(OpenasmBuffer *buf, size_t len) {
     uint32_t *dest = buffer + buf->sections[buf->section].len;
     memset(dest, 0, len);
     buf->sections[buf->section].len += len;
-    
+
     return (uint64_t) dest - (uint64_t) buffer;
 }
 
@@ -161,17 +161,17 @@ int openasm_ands64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm)
 }
 
 int openasm_movn32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
-    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVN32(0), imm, rd));
+    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVN32, imm, rd));
     return 0;
 }
 
 int openasm_movz32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
-    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVZ32(0), imm, rd));
+    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVZ32, imm, rd));
     return 0;
 }
 
 int openasm_movk32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
-    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVK32(0), imm, rd));
+    openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVK32, imm, rd));
     return 0;
 }
 
@@ -297,6 +297,621 @@ int openasm_b(OpenasmBuffer *buf, uint32_t imm) {
 
 int openasm_bl(OpenasmBuffer *buf, uint32_t imm) {
     openasm_write(buf, OPENASM_ENCODE_BR_UNCOND2(OPENASM_BR_BL, imm));
+    return 0;
+}
+
+int openasm_ldr32(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR32, imm, rt));
+    return 0;
+}
+
+int openasm_ldr32v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR32V, imm, rt));
+    return 0;
+}
+
+int openasm_ldr64(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR64, imm, rt));
+    return 0;
+}
+
+int openasm_ldr64v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR64V, imm, rt));
+    return 0;
+}
+
+int openasm_ldrsw(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDRSW, imm, rt));
+    return 0;
+}
+
+int openasm_ldr128v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR128V, imm, rt));
+    return 0;
+}
+
+int openasm_prfm(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_PRFM, imm, rt));
+    return 0;
+}
+
+int openasm_stnp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldnp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stnp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldnp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stnp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldnp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stnp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldnp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stnp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldnp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stgp_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STGP, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldpsw_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp128v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp128v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stgp(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STGP, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldpsw(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp32v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp32v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stgp_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STGP, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldpsw_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp64_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp64_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stp128v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldp128v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_sturb(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STURB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldurb(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldursb64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSB64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldursb32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSB32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur8v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur8v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_sturh(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STURH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldurh(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldursh64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSH64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldursh32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSH32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur16v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur16v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldursw(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_prfum(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_PRFUM, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_stur64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldur64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_strb_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STRB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrb_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsb64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSB64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsb32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSB32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str8v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr8v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str128v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr128v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_strh_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STRH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrh_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsh64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSH64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsh32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSH32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str16v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr16v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsw_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str32v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr32v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str64v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr64v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_strb_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STRB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrb_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRB, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsb64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSB64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsb32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSB32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str8v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr8v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR8V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str128v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr128v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR128V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_strh_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STRH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrh_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRH, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsh64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSH64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsh32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSH32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str16v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr16v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR16V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR32, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldrsw_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSW, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str32v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr32v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR32V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR64, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_str64v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR64V, imm, rn, rt1, rt2));
+    return 0;
+}
+
+int openasm_ldr64v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
@@ -477,6 +1092,7 @@ static int openasm_blnv(OpenasmBuffer *buf, uint32_t imm) {
 #define Rd OPENASM_OP_REG
 #define Rn OPENASM_OP_REG
 #define Rm OPENASM_OP_REG
+#define Rt OPENASM_OP_REG
 #define imm OPENASM_OP_IMM
 #define imms OPENASM_OP_IMM
 #define immr OPENASM_OP_IMM
@@ -733,6 +1349,207 @@ static int (*openasm_inst_mov[])(/* OpenasmBuffer * */) = {
     [OPENASM_OP2(64, Rd, Rn)] = (int (*)()) openasm_mov64_r,
 };
 
+static int (*openasm_inst_ldnp[])(/* OpenasmBuffer * */) = {
+    /* openasm_ldnp128v, */
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldnp32,
+    /* openasm_ldnp32v, */
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldnp64,
+    /* openasm_ldnp64v, */
+};
+
+static int (*openasm_inst_ldp[])(/* OpenasmBuffer * */) = {
+    /* openasm_ldp128v, */
+    /* openasm_ldp128v_post, */
+    /* openasm_ldp128v_pre, */
+    [OPENASM_OP4_IDX(OPENASM_OPOFF, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp32,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp32_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp32_pre,
+    /* openasm_ldp32v, */
+    /* openasm_ldp32v_post, */
+    /* openasm_ldp32v_pre, */
+    [OPENASM_OP4_IDX(OPENASM_OPOFF, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp64,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp64_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldp64_pre,
+    /* openasm_ldp64v, */
+    /* openasm_ldp64v_post, */
+    /* openasm_ldp64v_pre, */
+};
+
+static int (*openasm_inst_ldpsw[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldpsw,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldpsw_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldpsw_pre,
+};
+
+static int (*openasm_inst_ldr[])(/* OpenasmBuffer * */) = {
+    /* openasm_ldr128v, */
+    /* openasm_ldr128v_imm_post, */
+    /* openasm_ldr128v_imm_pre, */
+    /* openasm_ldr16v_imm_post, */
+    /* openasm_ldr16v_imm_pre, */
+    [OPENASM_OP2(32, Rt, imm)] = (int (*)()) openasm_ldr32,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldr32_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldr32_imm_pre,
+    /* openasm_ldr32v, */
+    /* openasm_ldr32v_imm_post, */
+    /* openasm_ldr32v_imm_pre, */
+    [OPENASM_OP2(64, Rt, imm)] = (int (*)()) openasm_ldr64,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldr64_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldr64_imm_pre,
+    /* openasm_ldr64v, */
+    /* openasm_ldr64v_imm_post, */
+    /* openasm_ldr64v_imm_pre, */
+    /* openasm_ldr8v_imm_post, */
+    /* openasm_ldr8v_imm_pre, */
+};
+
+static int (*openasm_inst_ldrb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrb_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrb_imm_pre,
+};
+
+static int (*openasm_inst_ldrh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrh_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrh_imm_pre,
+};
+
+static int (*openasm_inst_ldrsb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsb32_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsb32_imm_pre,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsb64_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsb64_imm_pre,
+};
+
+static int (*openasm_inst_ldrsh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsh32_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsh32_imm_pre,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsh64_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsh64_imm_pre,
+};
+
+static int (*openasm_inst_ldrsw[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP2(32, Rt, imm)] = (int (*)()) openasm_ldrsw,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsw_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldrsw_imm_pre,
+};
+
+static int (*openasm_inst_ldur[])(/* OpenasmBuffer * */) = {
+    /* openasm_ldur128v, */
+    /* openasm_ldur16v, */
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldur32,
+    /* openasm_ldur32v, */
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldur64,
+    /* openasm_ldur64v, */
+    /* openasm_ldur8v, */
+};
+
+static int (*openasm_inst_ldurb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldurb,
+};
+
+static int (*openasm_inst_ldurh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldurh,
+};
+
+static int (*openasm_inst_ldursb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldursb32,
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldursb64,
+};
+
+static int (*openasm_inst_ldursh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldursh32,
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldursh64,
+};
+
+static int (*openasm_inst_ldursw[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_ldursw,
+};
+
+static int (*openasm_inst_prfm[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP2(64, Rt, imm)] = (int (*)()) openasm_prfm,
+};
+
+static int (*openasm_inst_prfum[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_prfum,
+};
+
+static int (*openasm_inst_stgp[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stgp,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stgp_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stgp_pre,
+};
+
+static int (*openasm_inst_stnp[])(/* OpenasmBuffer * */) = {
+    /* openasm_stnp128v, */
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stnp32,
+    /* openasm_stnp32v, */
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stnp64,
+    /* openasm_stnp64v, */
+    /* openasm_stp128v, */
+    /* openasm_stp128v_post, */
+    /* openasm_stp128v_pre, */
+};
+
+static int (*openasm_inst_stp[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp32,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp32_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp32_pre,
+    /* openasm_stp32v, */
+    /* openasm_stp32v_post, */
+    /* openasm_stp32v_pre, */
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp64,
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp64_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stp64_pre,
+    /* openasm_stp64v, */
+    /* openasm_stp64v_post, */
+    /* openasm_stp64v_pre, */
+};
+
+static int (*openasm_inst_str[])(/* OpenasmBuffer * */) = {
+    /* openasm_str128v_imm_post, */
+    /* openasm_str128v_imm_pre, */
+    /* openasm_str16v_imm_post, */
+    /* openasm_str16v_imm_pre, */
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_str32_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_str32_imm_pre,
+    /* openasm_str32v_imm_post, */
+    /* openasm_str32v_imm_pre, */
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_str64_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_str64_imm_pre,
+    /* openasm_str64v_imm_post, */
+    /* openasm_str64v_imm_pre, */
+    /* openasm_str8v_imm_post, */
+    /* openasm_str8v_imm_pre, */
+};
+
+static int (*openasm_inst_strb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_strb_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_strb_imm_pre,
+};
+
+static int (*openasm_inst_strh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4_IDX(OPENASM_OPPOST, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_strh_imm_post,
+    [OPENASM_OP4_IDX(OPENASM_OPPRE, 32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_strh_imm_pre,
+};
+
+static int (*openasm_inst_stur[])(/* OpenasmBuffer * */) = {
+    /* openasm_stur128v, */
+    /* openasm_stur16v, */
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stur32,
+    /* openasm_stur32v, */
+    [OPENASM_OP4(64, Rn, Rt, Rt, imm)] = (int (*)()) openasm_stur64,
+    /* openasm_stur64v, */
+    /* openasm_stur8v, */
+};
+
+static int (*openasm_inst_sturb[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_sturb,
+};
+
+static int (*openasm_inst_sturh[])(/* OpenasmBuffer * */) = {
+    [OPENASM_OP4(32, Rn, Rt, Rt, imm)] = (int (*)()) openasm_sturh,
+};
+
 struct OpenasmEntry openasm_inst[] = {
     { "add", openasm_inst_add },
     { "adds", openasm_inst_adds },
@@ -761,6 +1578,32 @@ struct OpenasmEntry openasm_inst[] = {
     { "ret", openasm_inst_ret },
     { "b", openasm_inst_b },
     { "bl", openasm_inst_bl },
+    { "ldnp", openasm_inst_ldnp },
+    { "ldp", openasm_inst_ldp },
+    { "ldpsw", openasm_inst_ldpsw },
+    { "ldr", openasm_inst_ldr },
+    { "ldrb", openasm_inst_ldrb },
+    { "ldrh", openasm_inst_ldrh },
+    { "ldrsb", openasm_inst_ldrsb },
+    { "ldrsh", openasm_inst_ldrsh },
+    { "ldrsw", openasm_inst_ldrsw },
+    { "ldur", openasm_inst_ldur },
+    { "ldurb", openasm_inst_ldurb },
+    { "ldurh", openasm_inst_ldurh },
+    { "ldursb", openasm_inst_ldursb },
+    { "ldursh", openasm_inst_ldursh },
+    { "ldursw", openasm_inst_ldursw },
+    { "prfm", openasm_inst_prfm },
+    { "prfum", openasm_inst_prfum },
+    { "stgp", openasm_inst_stgp },
+    { "stnp", openasm_inst_stnp },
+    { "stp", openasm_inst_stp },
+    { "str", openasm_inst_str },
+    { "strb", openasm_inst_strb },
+    { "strh", openasm_inst_strh },
+    { "stur", openasm_inst_stur },
+    { "sturb", openasm_inst_sturb },
+    { "sturh", openasm_inst_sturh },
     /* aliases */
     { "cmp", openasm_inst_cmp },
     { "tst", openasm_inst_tst },

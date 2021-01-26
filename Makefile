@@ -1,4 +1,4 @@
-.PHONY: all clean mrproper aarch64/test amd64/test
+.PHONY: all clean mrproper aarch64/test aarch64/libopenasm_aarch64.so amd64/libopenasm_amd64.so amd64/test
 
 all: aarch64/libopenasm_aarch64.so amd64/libopenasm_amd64.so
 

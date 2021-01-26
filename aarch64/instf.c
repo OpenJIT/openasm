@@ -84,11 +84,9 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 		    tag |= OPENASM_OP_REG;
                     const char *target = va_arg(args, char *);
 		    if (target[0] == 'w') {
-			if (bits && bits != 32) {
-			    fprintf(stderr, "error: cannot mix 32 and 64 bit registers\n");
-			    return 1;
+			if (!bits) {
+                            bits = 32;
 			}
-			bits = 32;
 			uint8_t reg = strtoreg(target + 1);
 			if (reg > 0x1f) {
 			    fprintf(stderr, "error: invalid registers: %s\n", target);
@@ -98,19 +96,15 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 		    } else if (strcmp(target, "fp") == 0
 			       || strcmp(target, "lr") == 0
 			       || strcmp(target, "sp") == 0) {
-			if (bits && bits != 64) {
-			    fprintf(stderr, "error: cannot mix 32 and 64 bit registers\n");
-			    return 1;
+			if (!bits) {
+                            bits = 64;
 			}
-			bits = 64;
 			uint8_t reg = strtoreg(target);
 			regv[regc++] = reg;
 		    } else if (target[0] == 'x') {
-			if (bits && bits != 64) {
-			    fprintf(stderr, "error: cannot mix 32 and 64 bit registers\n");
-			    return 1;
+			if (!bits) {
+                            bits = 64;
 			}
-			bits = 64;
 			uint8_t reg = strtoreg(target + 1);
 			if (reg > 0x1f) {
 			    fprintf(stderr, "error: invalid registers: %s\n", target);
