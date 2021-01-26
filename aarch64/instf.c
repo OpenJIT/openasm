@@ -119,6 +119,35 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                     uint32_t imm = va_arg(args, uint32_t);
 		    immv[immc++] = imm;
                 } break;
+                case '=': {
+		    tag <<= 1;
+		    tag |= OPENASM_OP_IMM;
+                    uint64_t imm = va_arg(args, uint64_t);
+
+                    size_t index = openasm_pool(buf, imm);
+                    
+		    immv[immc++] = 0;
+                    if (buf->symtable.len == buf->symtable.cap) {
+                        buf->symtable.cap *= 2;
+                        buf->symtable.table = realloc(buf->symtable.table, buf->symtable.cap * sizeof(struct OpenasmSymbol));
+                    }
+                    
+                    const char *src_section = buf->sections[buf->section].name;
+                    const char *addr_section = src_section;
+                    size_t llen = 40;
+                    char *name = malloc(llen + 1);
+                    snprintf(name, llen, "__pool_%u_%u", buf->pool.gen, (uint32_t) index);
+                    name[llen] = 0;
+                    buf->sym = 1;
+                    buf->symtable.table[buf->symtable.len].src_section = src_section;
+                    buf->symtable.table[buf->symtable.len].addr_section = addr_section;
+                    buf->symtable.table[buf->symtable.len].sym = name;
+                    buf->symtable.table[buf->symtable.len].defined = 0;
+                    buf->symtable.table[buf->symtable.len].bits = 0;
+                    buf->symtable.table[buf->symtable.len].offset = 0;
+                    buf->symtable.table[buf->symtable.len].addr = 0;
+                    buf->symtable.table[buf->symtable.len++].rel = 1;
+                } break;
                 default: {
                     fprintf(stderr, "error: invalid `openasm_instf` parameter: '%c'\n", *fmt);
                     return 1;
@@ -191,6 +220,42 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
 		case OPENASM_OP3(0, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_IMM):
 		    return fn(buf, immv[0], immv[0], immv[2]);
 		}
+		break;
+	    case 4:
+		switch (OPENASM_MASKOP(tag)) {
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_REG):
+		    return fn(buf, regv[0], regv[1], regv[2], regv[3]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_IMM):
+		    return fn(buf, regv[0], regv[1], regv[2], immv[0]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_REG):
+		    return fn(buf, regv[0], regv[1], immv[0], regv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_REG):
+		    return fn(buf, regv[0], immv[0], regv[1], regv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_REG):
+		    return fn(buf, immv[0], regv[0], regv[1], regv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_IMM):
+		    return fn(buf, regv[0], regv[1], immv[0], immv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_IMM):
+		    return fn(buf, regv[0], immv[0], regv[1], immv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_REG, OPENASM_OP_IMM):
+		    return fn(buf, immv[0], regv[0], regv[1], immv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_REG):
+		    return fn(buf, regv[0], immv[0], immv[1], regv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_REG):
+		    return fn(buf, immv[0], regv[0], immv[1], regv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_REG):
+		    return fn(buf, immv[0], immv[1], regv[0], regv[1]);
+		case OPENASM_OP4(0, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_IMM):
+		    return fn(buf, regv[0], immv[0], immv[1], immv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_IMM, OPENASM_OP_IMM):
+		    return fn(buf, immv[0], regv[0], immv[1], immv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_REG, OPENASM_OP_IMM):
+		    return fn(buf, immv[0], immv[1], regv[0], immv[2]);
+		case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_REG):
+		    return fn(buf, immv[0], immv[1], immv[2], regv[0]);
+                case OPENASM_OP4(0, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_IMM, OPENASM_OP_IMM):
+		    return fn(buf, immv[0], immv[1], immv[2], immv[3]);
+                }
 		break;
 	    default:
 		// more than 3 operands: unsupported

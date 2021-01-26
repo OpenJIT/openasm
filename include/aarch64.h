@@ -16,12 +16,21 @@ struct OpenasmSection {
     uint32_t *buffer;
 };
 
+struct OpenasmPoolQueue {
+    uint32_t gen;
+    size_t len;
+    size_t cap;
+    uint64_t *buffer;
+};
+
 struct OpenasmBuffer {
     size_t len;
     size_t cap;
     struct OpenasmSection *sections;
-    
+
     size_t section;
+    
+    struct OpenasmPoolQueue pool;
 
     int sym;
     struct OpenasmSymbolTable symtable;
@@ -591,6 +600,8 @@ void openasm_write(OpenasmBuffer *buf, uint32_t instr);
 
 int openasm_instf(OpenasmBuffer *buf, const char *fmt, ...);
 int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args);
+size_t openasm_pool(OpenasmBuffer *buf, uint64_t value);
+void openasm_flush_pool(OpenasmBuffer *buf);
 uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr);
 uint64_t openasm_res(OpenasmBuffer *buf, size_t len);
 

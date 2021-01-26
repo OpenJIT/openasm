@@ -3,12 +3,19 @@
 
 #define DEFAULT_SECTION_CAP ((size_t) 32)
 #define DEFAULT_SYMTABLE_CAP ((size_t) 128)
+#define DEFAULT_POOL_CAP ((size_t) 512)
 
 void openasm_buffer(OpenasmBuffer *buf) {
     size_t cap = DEFAULT_SECTION_CAP;
     buf->cap = cap;
     buf->len = 0;
     buf->sections = malloc(cap * sizeof(struct OpenasmSection));
+
+    cap = DEFAULT_POOL_CAP;
+    buf->pool.gen = 0;
+    buf->pool.cap = cap;
+    buf->pool.len = 0;
+    buf->pool.buffer = malloc(cap * sizeof(uint64_t));
 
     openasm_section(buf, "rodata");
     openasm_section(buf, "data");
@@ -28,6 +35,7 @@ void openasm_del_buffer(OpenasmBuffer *buf) {
     }
     free(buf->symtable.table);
     free(buf->sections);
+    free(buf->pool.buffer);
 }
 
 void openasm_write(OpenasmBuffer *buf, uint32_t instr) {
@@ -40,6 +48,34 @@ void openasm_write(OpenasmBuffer *buf, uint32_t instr) {
     uint32_t *dest = buffer + buf->sections[buf->section].len;
     *dest = instr;
     ++buf->sections[buf->section].len;
+}
+
+size_t openasm_pool(OpenasmBuffer *buf, uint64_t value) {
+    if (buf->pool.len + sizeof(uint64_t) >= buf->pool.cap) {
+        buf->pool.cap *= 2;
+        buf->pool.buffer = realloc(buf->pool.buffer, buf->pool.cap);
+    }
+
+    size_t index = buf->pool.len;
+
+    buf->pool.buffer[buf->pool.len++] = value;
+
+    return index;
+}
+
+void openasm_flush_pool(OpenasmBuffer *buf) {
+    for (size_t i = 0; i < buf->pool.len; i++) {
+        size_t llen = 40;
+        char name[41];
+        snprintf(name, llen, "__pool_%u_%u", buf->pool.gen, (uint32_t) i);
+        name[llen] = 0;
+        uint64_t addr = openasm_current_addr(buf);
+        openasm_symbol(buf, buf->sections[buf->section].name, name, addr);
+        openasm_data(buf, sizeof(uint64_t), buf->pool.buffer + i);
+    }
+
+    buf->pool.len = 0;
+    buf->pool.gen += 1;
 }
 
 uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr) {
