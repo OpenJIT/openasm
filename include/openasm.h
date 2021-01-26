@@ -44,6 +44,12 @@ struct OpenasmElf {
     /* Elf64_Dyn dyns[0]; */
 };
 
+enum {
+    OPENASM_SYM_FUNC_DEFAULT,
+    OPENASM_SYM_FUNC_SHIFT_MASK,
+    OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK,
+};
+
 struct OpenasmSymbol {
     const char *src_section;
     const char *addr_section;
@@ -51,8 +57,11 @@ struct OpenasmSymbol {
     int defined;
     int bits;
     size_t offset;
-    size_t shift;
-    uint64_t mask;
+    int func;
+    size_t shift1;
+    size_t shift2;
+    uint64_t mask2;
+    uint64_t mask1;
     uint64_t addr;
     int rel;
 };

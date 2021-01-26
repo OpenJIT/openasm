@@ -57,17 +57,30 @@ int openasm_link(OpenasmBuffer *buf) {
         }
         openasm_section(buf, buf->symtable.table[i].src_section);
         int rel = buf->symtable.table[i].rel;
-        size_t size = buf->symtable.table[i].bits >> 3;
-        uint64_t offset = buf->symtable.table[i].offset / sizeof(uint32_t);
-        uint32_t addr = buf->symtable.table[i].addr;
-        uint32_t mask = buf->symtable.table[i].mask;
-        uint32_t shift = buf->symtable.table[i].shift;
+        uint64_t offset = buf->symtable.table[i].offset;
+        uint64_t addr = buf->symtable.table[i].addr >> 2; /* has to be 4-byte aligned */
+        int func = buf->symtable.table[i].func;
+        uint32_t mask1 = buf->symtable.table[i].mask1;
+        uint32_t shift1 = buf->symtable.table[i].shift1;
+        uint32_t mask2 = buf->symtable.table[i].mask2;
+        uint32_t shift2 = buf->symtable.table[i].shift2;
         if (rel) {
-            addr = addr - (offset + size);
+            addr = addr - offset;
         }
-	addr = (addr & mask) << shift;
-        uint32_t *ptr = buf->sections[buf->section].buffer + offset;
-	*ptr |= addr;
+        uint32_t *ptr = buf->sections[buf->section].buffer + offset / sizeof(uint32_t);
+        switch (func) {
+        case OPENASM_SYM_FUNC_DEFAULT:
+            *ptr |= addr;
+            break;
+        case OPENASM_SYM_FUNC_SHIFT_MASK:
+            addr = (addr & mask1) << shift1;
+            *ptr |= addr;
+            break;
+        case OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK:
+            *ptr |= (addr & mask2) << shift2;
+            *ptr |= (addr & mask1) << shift1;
+            break;
+        }
     }
     return status;
 }

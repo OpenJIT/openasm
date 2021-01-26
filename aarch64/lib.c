@@ -70,212 +70,286 @@ uint64_t openasm_res(OpenasmBuffer *buf, size_t len) {
     return (uint64_t) dest - (uint64_t) buffer;
 }
 
+#define OPENASM_SYMBOL(mask, shift) \
+    do { \
+        if (buf->sym) { \
+            buf->symtable.table[buf->symtable.len - 1].offset = buf->sections[buf->section].len * sizeof(uint32_t); \
+            buf->symtable.table[buf->symtable.len - 1].bits = 32; \
+            buf->symtable.table[buf->symtable.len - 1].func = OPENASM_SYM_FUNC_SHIFT_MASK; \
+            buf->symtable.table[buf->symtable.len - 1].mask1 = mask; \
+            buf->symtable.table[buf->symtable.len - 1].shift1 = shift; \
+            buf->sym = 0; \
+        } \
+    } while (0)
+
 int openasm_adr_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    if (buf->sym) {
+        buf->symtable.table[buf->symtable.len - 1].offset = buf->sections[buf->section].len * sizeof(uint32_t);
+        buf->symtable.table[buf->symtable.len - 1].bits = 32;
+        buf->symtable.table[buf->symtable.len - 1].func = OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK;
+        buf->symtable.table[buf->symtable.len - 1].mask1 = 0x3;
+        buf->symtable.table[buf->symtable.len - 1].shift1 = 29;
+        buf->symtable.table[buf->symtable.len - 1].mask2 = 0x7ffff << 2;
+        buf->symtable.table[buf->symtable.len - 1].shift2 = 5;
+        buf->sym = 0;
+    }
+    
     openasm_write(buf, OPENASM_ENCODE_DPIMM_REL(OPENASM_DPIMM_ADR, imm, rd));
     return 0;
 }
 
 int openasm_adrp_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    if (buf->sym) {
+        buf->symtable.table[buf->symtable.len - 1].offset = buf->sections[buf->section].len * sizeof(uint32_t);
+        buf->symtable.table[buf->symtable.len - 1].bits = 32;
+        buf->symtable.table[buf->symtable.len - 1].func = OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK;
+        buf->symtable.table[buf->symtable.len - 1].mask1 = 0x3;
+        buf->symtable.table[buf->symtable.len - 1].shift1 = 29;
+        buf->symtable.table[buf->symtable.len - 1].mask2 = 0x7ffff << 2;
+        buf->symtable.table[buf->symtable.len - 1].shift2 = 5;
+        buf->sym = 0;
+    }
+    
     openasm_write(buf, OPENASM_ENCODE_DPIMM_REL(OPENASM_DPIMM_ADRP, imm, rd));
     return 0;
 }
 
 int openasm_add32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_ADD32, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_adds32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_ADDS32, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_sub32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_SUB32, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_subs32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_SUBS32, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_add64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_ADD64, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_adds64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_ADDS64, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_sub64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_SUB64, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_subs64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm, int sh) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_ADD(OPENASM_DPIMM_SUBS64, sh, imm, rn, rd));
     return 0;
 }
 
 int openasm_and32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_AND32, imm, rn, rd));
     return 0;
 }
 
 int openasm_orr32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_ORR32, imm, rn, rd));
     return 0;
 }
 
 int openasm_eor32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_EOR32, imm, rn, rd));
     return 0;
 }
 
 int openasm_ands32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_ANDS32, imm, rn, rd));
     return 0;
 }
 
 int openasm_and64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_AND64, imm, rn, rd));
     return 0;
 }
 
 int openasm_orr64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_ORR64, imm, rn, rd));
     return 0;
 }
 
 int openasm_eor64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_EOR64, imm, rn, rd));
     return 0;
 }
 
 int openasm_ands64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_LOG(OPENASM_DPIMM_ANDS64, imm, rn, rd));
     return 0;
 }
 
 int openasm_movn32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVN32, imm, rd));
     return 0;
 }
 
 int openasm_movz32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVZ32, imm, rd));
     return 0;
 }
 
 int openasm_movk32_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVK32, imm, rd));
     return 0;
 }
 
 int openasm_movn64_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVN64, imm, rd));
     return 0;
 }
 
 int openasm_movz64_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVZ64, imm, rd));
     return 0;
 }
 
 int openasm_movk64_imm(OpenasmBuffer *buf, uint8_t rd, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_MOV(OPENASM_DPIMM_MOVK64, imm, rd));
     return 0;
 }
 
 int openasm_sbfm32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_SBFM32, imm, rn, rd));
     return 0;
 }
 
 int openasm_bfm32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_BFM32, imm, rn, rd));
     return 0;
 }
 
 int openasm_ubfm32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0xfff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_UBFM32, imm, rn, rd));
     return 0;
 }
 
 int openasm_sbfm64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0x1fff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_SBFM64, imm, rn, rd));
     return 0;
 }
 
 int openasm_bfm64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0x1fff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_BFM64, imm, rn, rd));
     return 0;
 }
 
 int openasm_ubfm64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint32_t imm) {
+    OPENASM_SYMBOL(0x1fff, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_BIT(OPENASM_DPIMM_UBFM64, imm, rn, rd));
     return 0;
 }
 
 int openasm_extr32_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint8_t rm, uint32_t imms) {
+    OPENASM_SYMBOL(0x3f, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_EXT(OPENASM_DPIMM_EXTR32, rm, imms, rn, rd));
     return 0;
 }
 
 int openasm_extr64_imm(OpenasmBuffer *buf, uint8_t rd, uint8_t rn, uint8_t rm, uint32_t imms) {
+    OPENASM_SYMBOL(0x3f, 10);
     openasm_write(buf, OPENASM_ENCODE_DPIMM_EXT(OPENASM_DPIMM_EXTR64, rm, imms, rn, rd));
     return 0;
 }
 
 int openasm_b_cond(OpenasmBuffer *buf, uint8_t cond, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, cond));
     return 0;
 }
 
 int openasm_bl_cond(OpenasmBuffer *buf, uint8_t cond, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, cond));
     return 0;
 }
 
 int openasm_svc(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_SVC, imm));
     return 0;
 }
 
 int openasm_hvc(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_HVC, imm));
     return 0;
 }
 
 int openasm_smc(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_SMC, imm));
     return 0;
 }
 
 int openasm_brk(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_BRK, imm));
     return 0;
 }
 
 int openasm_hlt(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_HLT, imm));
     return 0;
 }
 
 int openasm_dcps1(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_DCPS1, imm));
     return 0;
 }
 
 int openasm_dcps2(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_DCPS2, imm));
     return 0;
 }
 
 int openasm_dcps3(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0xffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_EXCEPT(OPENASM_BR_DCPS3, imm));
     return 0;
 }
@@ -291,626 +365,751 @@ int openasm_ret(OpenasmBuffer *buf, uint8_t rn) {
 }
 
 int openasm_b(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x3ffffff, 0);
     openasm_write(buf, OPENASM_ENCODE_BR_UNCOND2(OPENASM_BR_B, imm));
     return 0;
 }
 
 int openasm_bl(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x3ffffff, 0);
     openasm_write(buf, OPENASM_ENCODE_BR_UNCOND2(OPENASM_BR_BL, imm));
     return 0;
 }
 
 int openasm_ldr32(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR32, imm, rt));
     return 0;
 }
 
 int openasm_ldr32v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR32V, imm, rt));
     return 0;
 }
 
 int openasm_ldr64(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR64, imm, rt));
     return 0;
 }
 
 int openasm_ldr64v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR64V, imm, rt));
     return 0;
 }
 
 int openasm_ldrsw(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDRSW, imm, rt));
     return 0;
 }
 
 int openasm_ldr128v(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_LDR128V, imm, rt));
     return 0;
 }
 
 int openasm_prfm(OpenasmBuffer *buf, uint8_t rt, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_LS_LDLIT(OPENASM_LS_PRFM, imm, rt));
     return 0;
 }
 
 int openasm_stnp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldnp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stnp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldnp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stnp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldnp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stnp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldnp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stnp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_STNP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldnp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_NAPO(OPENASM_LS_LDNP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stgp_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STGP, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldpsw_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp128v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp128v_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPOST(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stgp(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STGP, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldpsw(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPO(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp32v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp32v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stgp_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STGP, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldpsw_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDPSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp64_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp64_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stp128v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_STP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldp128v_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RPPRE(OPENASM_LS_LDP128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_sturb(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STURB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldurb(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldursb64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSB64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldursb32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSB32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur8v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur8v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur128v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_sturh(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STURH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldurh(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldursh64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSH64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldursh32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSH32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur16v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur16v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur32(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldursw(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDURSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur32v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur64(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_prfum(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_PRFUM, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_stur64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_STUR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldur64v(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RUI(OPENASM_LS_LDUR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_strb_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STRB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrb_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsb64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSB64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsb32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSB32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str8v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr8v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str128v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr128v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_strh_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STRH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrh_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsh64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSH64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsh32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSH32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str16v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr16v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr32_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsw_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDRSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str32v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr32v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr64_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str64v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_STR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr64v_imm_post(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPOST(OPENASM_LS_I_LDR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_strb_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STRB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrb_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRB, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsb64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSB64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsb32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSB32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str8v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr8v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR8V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str128v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr128v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR128V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_strh_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STRH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrh_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRH, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsh64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSH64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsh32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSH32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str16v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr16v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR16V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr32_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR32, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldrsw_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDRSW, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str32v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr32v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR32V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr64_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR64, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_str64v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_STR64V, imm, rn, rt1, rt2));
     return 0;
 }
 
 int openasm_ldr64v_imm_pre(OpenasmBuffer *buf, uint8_t rn, uint8_t rt1, uint8_t rt2, uint32_t imm) {
+    OPENASM_SYMBOL(0x7f, 15);
     openasm_write(buf, OPENASM_ENCODE_LS_RIPRE(OPENASM_LS_I_LDR64V, imm, rn, rt1, rt2));
     return 0;
 }
@@ -950,141 +1149,169 @@ int openasm_tst64_imm(OpenasmBuffer *buf, uint8_t rn, uint32_t imm) {
 
 /* static aliases */
 static int openasm_beq(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_EQ));
     return 0;
 }
 
 static int openasm_bleq(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_EQ));
     return 0;
 }
 
 static int openasm_bne(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_NE));
     return 0;
 }
 
 static int openasm_blne(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_NE));
     return 0;
 }
 
 static int openasm_bcs(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_CS));
     return 0;
 }
 
 static int openasm_blcs(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_CS));
     return 0;
 }
 
 static int openasm_bcc(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_CC));
     return 0;
 }
 
 static int openasm_blcc(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_CC));
     return 0;
 }
 
 static int openasm_bmi(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_MI));
     return 0;
 }
 
 static int openasm_blmi(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_MI));
     return 0;
 }
 
 static int openasm_bpl(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_PL));
     return 0;
 }
 
 static int openasm_blpl(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_PL));
     return 0;
 }
 
 static int openasm_bhi(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_HI));
     return 0;
 }
 
 static int openasm_blhi(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_HI));
     return 0;
 }
 
 static int openasm_bls(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_LS));
     return 0;
 }
 
 static int openasm_blls(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_LS));
     return 0;
 }
 
 static int openasm_bge(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_GE));
     return 0;
 }
 
 static int openasm_blge(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_GE));
     return 0;
 }
 
 static int openasm_blt(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_LT));
     return 0;
 }
 
 static int openasm_bllt(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_LT));
     return 0;
 }
 
 static int openasm_bgt(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_GT));
     return 0;
 }
 
 static int openasm_blgt(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_GT));
     return 0;
 }
 
 static int openasm_ble(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_LE));
     return 0;
 }
 
 static int openasm_blle(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_LE));
     return 0;
 }
 
 static int openasm_bal(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_AL));
     return 0;
 }
 
 static int openasm_blal(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_AL));
     return 0;
 }
 
 static int openasm_bnv(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_B_COND, imm, OPENASM_COND_NV));
     return 0;
 }
 
 static int openasm_blnv(OpenasmBuffer *buf, uint32_t imm) {
+    OPENASM_SYMBOL(0x7ffff, 5);
     openasm_write(buf, OPENASM_ENCODE_BR_COND(OPENASM_BR_BL_COND, imm, OPENASM_COND_NV));
     return 0;
 }
