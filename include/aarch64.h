@@ -345,6 +345,7 @@ union OpenasmOperand {
 #define OPENASM_ENCODE_LS_LDLIT(op, imm19, rt) \
     ((((op >> 1) & 0x3) << 30) \
     | ((op & 1) << 26) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LDLIT >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LDLIT >> 10) & 1) << 26) \
     | (((OPENASM_LS_LDLIT >> 8) & 0x3) << 23) \
@@ -367,6 +368,7 @@ union OpenasmOperand {
     ((((op >> 2) & 0x3) << 30) \
     | (((op >> 1) & 1) << 26) \
     | ((op & 1) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSNAPO >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSNAPO >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSNAPO >> 8) & 0x3) << 23) \
@@ -393,6 +395,7 @@ union OpenasmOperand {
     ((((op >> 2) & 0x3) << 30) \
     | (((op >> 1) & 1) << 26) \
     | ((op & 1) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRPPOST >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRPPOST >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRPPOST >> 8) & 0x3) << 23) \
@@ -420,6 +423,7 @@ union OpenasmOperand {
     ((((op >> 2) & 0x3) << 30) \
     | (((op >> 1) & 1) << 26) \
     | ((op & 1) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRPO >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRPO >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRPO >> 8) & 0x3) << 23) \
@@ -447,6 +451,7 @@ union OpenasmOperand {
     ((((op >> 2) & 0x3) << 30) \
     | (((op >> 1) & 1) << 26) \
     | ((op & 1) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRPPRE >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRPPRE >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRPPRE >> 8) & 0x3) << 23) \
@@ -485,6 +490,7 @@ union OpenasmOperand {
     ((((op >> 3) & 0x3) << 30) \
     | (((op >> 2) & 1) << 26) \
     | ((op & 0x3) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRUI >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRUI >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRUI >> 8) & 0x3) << 23) \
@@ -522,6 +528,7 @@ union OpenasmOperand {
     ((((op >> 3) & 0x3) << 30) \
     | (((op >> 2) & 1) << 26) \
     | ((op & 0x3) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRIPOST >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRIPOST >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRIPOST >> 8) & 0x3) << 23) \
@@ -562,6 +569,7 @@ union OpenasmOperand {
     ((((op >> 3) & 0x3) << 30) \
     | (((op >> 2) & 1) << 26) \
     | ((op & 0x3) << 22) \
+    | (OPENASM_OP0_LS << 25) \
     | (((OPENASM_LS_LSRIPRE >> 11) & 0xf) << 28) \
     | (((OPENASM_LS_LSRIPRE >> 10) & 1) << 26) \
     | (((OPENASM_LS_LSRIPRE >> 8) & 0x3) << 23) \
