@@ -285,8 +285,6 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_MEMORY16:
         case OPENASM_OP_MEMORY32:
         case OPENASM_OP_MEMORY64:
-            if (op->mem.base) op->mem.base = openasm_match_reg(op->mem.base, 8);
-            if (op->mem.index) op->mem.index = openasm_match_reg(op->mem.index, 8);
             return OPENASM_OP_MEMORY8;
         default:
             abort();
@@ -308,8 +306,6 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_MEMORY16:
         case OPENASM_OP_MEMORY32:
         case OPENASM_OP_MEMORY64:
-            if (op->mem.base) op->mem.base = openasm_match_reg(op->mem.base, 16);
-            if (op->mem.index) op->mem.index = openasm_match_reg(op->mem.index, 16);
             return OPENASM_OP_MEMORY16;
         default:
             abort();
@@ -326,14 +322,11 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_IMM16:
         case OPENASM_OP_IMM32:
         case OPENASM_OP_IMM64:
-            op->reg = openasm_match_reg(op->reg, 64);
             return OPENASM_OP_IMM32;
         case OPENASM_OP_MEMORY8:
         case OPENASM_OP_MEMORY16:
         case OPENASM_OP_MEMORY32:
         case OPENASM_OP_MEMORY64:
-            if (op->mem.base) op->mem.base = openasm_match_reg(op->mem.base, 32);
-            if (op->mem.index) op->mem.index = openasm_match_reg(op->mem.index, 32);
             return OPENASM_OP_MEMORY32;
         default:
             abort();
@@ -344,6 +337,7 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_REG16:
         case OPENASM_OP_REG32:
         case OPENASM_OP_REG64:
+            op->reg = openasm_match_reg(op->reg, 64);
             return OPENASM_OP_REG64;
         case OPENASM_OP_IMM8:
         case OPENASM_OP_IMM16:
@@ -354,8 +348,6 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_MEMORY16:
         case OPENASM_OP_MEMORY32:
         case OPENASM_OP_MEMORY64:
-            if (op->mem.base) op->mem.base = openasm_match_reg(op->mem.base, 64);
-            if (op->mem.index) op->mem.index = openasm_match_reg(op->mem.index, 64);
             return OPENASM_OP_MEMORY64;
         default:
             abort();
