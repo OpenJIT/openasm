@@ -40,7 +40,7 @@ typedef void *(*OpenasmFnvp)();
 struct OpenasmElf {
     Elf64_Ehdr ehdr;
     Elf64_Phdr phdrs[5];
-    Elf64_Shdr shdrs[6];
+    Elf64_Shdr shdrs[8];
     /* Elf64_Dyn dyns[0]; */
 };
 
@@ -50,10 +50,18 @@ enum {
     OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK,
 };
 
+enum {
+    OPENASM_BIND_LOCAL,
+    OPENASM_BIND_GLOBAL,
+    OPENASM_BIND_WEAK,
+    OPENASM_BIND_PRIVATE,
+};
+
 struct OpenasmSymbol {
     const char *src_section;
     const char *addr_section;
     const char *sym;
+    int binding;
     int defined;
     int bits;
     size_t offset;
@@ -63,6 +71,7 @@ struct OpenasmSymbol {
     uint64_t mask2;
     uint64_t mask1;
     uint64_t addr;
+    uint64_t size;
     int rel;
 };
 

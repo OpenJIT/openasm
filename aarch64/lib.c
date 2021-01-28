@@ -27,6 +27,10 @@ void openasm_buffer(OpenasmBuffer *buf) {
     buf->symtable.cap = cap;
     buf->symtable.len = 0;
     buf->symtable.table = malloc(cap * sizeof(struct OpenasmSymbol));
+    
+    buf->export.cap = cap;
+    buf->export.len = 0;
+    buf->export.table = malloc(cap * sizeof(struct OpenasmSymbol));
 }
 
 void openasm_del_buffer(OpenasmBuffer *buf) {
@@ -70,7 +74,7 @@ void openasm_flush_pool(OpenasmBuffer *buf) {
         snprintf(name, llen, "__pool_%u_%u", buf->pool.gen, (uint32_t) i);
         name[llen] = 0;
         uint64_t addr = openasm_current_addr(buf);
-        openasm_symbol(buf, buf->sections[buf->section].name, name, addr);
+        openasm_symbol(buf, buf->sections[buf->section].name, name, OPENASM_BIND_PRIVATE, addr, sizeof(uint64_t));
         openasm_data(buf, sizeof(uint64_t), buf->pool.buffer + i);
     }
 

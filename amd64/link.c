@@ -33,15 +33,33 @@ uint64_t openasm_current_addr(OpenasmBuffer *buf) {
     return buf->sections[buf->section].len;
 }
 
-bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr) {
+bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, int binding, uint64_t addr, uint64_t size) {
     bool used = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
         if (strcmp(buf->symtable.table[i].addr_section, section) == 0
             && strcmp(buf->symtable.table[i].sym, sym) == 0) {
             used = 1;
+	    // TODO: set the shift and mask shits
             buf->symtable.table[i].addr = addr;
+            buf->symtable.table[i].size = size;
+            buf->symtable.table[i].binding = binding;
             buf->symtable.table[i].defined = 1;
         }
+    }
+    if (binding != OPENASM_BIND_PRIVATE) {
+        if (buf->export.len == buf->export.cap) {
+            buf->export.cap *= 2;
+            buf->export.table = realloc(buf->export.table, buf->export.cap * sizeof(struct OpenasmSymbol));
+        }
+        buf->export.table[buf->export.len].addr_section = malloc(strlen(section) + 1);
+        strcpy((char *) buf->export.table[buf->export.len].addr_section, section);
+        buf->export.table[buf->export.len].sym = malloc(strlen(sym) + 1);
+        strcpy((char *) buf->export.table[buf->export.len].sym, sym);
+        buf->export.table[buf->export.len].addr = addr;
+        buf->export.table[buf->export.len].size = size;
+        buf->export.table[buf->export.len].binding = binding;
+        buf->export.table[buf->export.len].defined = 1;
+        ++buf->export.len;
     }
     return used;
 }
@@ -148,8 +166,8 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             .e_phentsize = 56         , /* (bytes) */
             .e_phnum     = 5          , /* (program headers) */
             .e_shentsize = 64         , /* (bytes) */
-            .e_shnum     = 6          , /* (section headers) */
-            .e_shstrndx  = 5        
+            .e_shnum     = 8          , /* (section headers) */
+            .e_shstrndx  = 7        
         },
         .phdrs = {
             // (elf and program headers)
@@ -274,6 +292,32 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
                 .sh_addralign = 32         ,
                 .sh_entsize   = 0         
             },
+            // .symtab
+            {
+                .sh_name      = 0          ,
+                .sh_type      = SHT_SYMTAB ,
+                .sh_flags     = 0          ,
+                .sh_addr      = 0x0        ,
+                .sh_offset    = 0          , /* (bytes) */
+                .sh_size      = 0          , /* (bytes) */
+                .sh_link      = 6          ,
+                .sh_info      = 0          ,
+                .sh_addralign = 8          ,
+                .sh_entsize   = sizeof(Elf64_Sym)         
+            },
+            // .strtab
+            {
+                .sh_name      = 0          ,
+                .sh_type      = SHT_STRTAB ,
+                .sh_flags     = 0          ,
+                .sh_addr      = 0x0        ,
+                .sh_offset    = 0          , /* (bytes) */
+                .sh_size      = 0          , /* (bytes) */
+                .sh_link      = 0          ,
+                .sh_info      = 0          ,
+                .sh_addralign = 1          ,
+                .sh_entsize   = 0         
+            },
             // .shstrtab
             {
                 .sh_name      = 0          ,
@@ -286,7 +330,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
                 .sh_info      = 0          ,
                 .sh_addralign = 1          ,
                 .sh_entsize   = 0         
-            }
+            },
         }
     };
 
@@ -308,15 +352,86 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     size_t bss_offset = openasm_align_up(rodata_offset + rodata_size, 16);
     size_t bss_size = buf->sections[buf->section].len;
 
+    size_t strtab_size = 1;
+    for (size_t i = 0; i < buf->export.len; i++) {
+        if (!buf->export.table[i].defined || buf->export.table[i].binding == OPENASM_BIND_PRIVATE) {
+            continue;
+        }
+        strtab_size += strlen(buf->export.table[i].sym) + 1;
+    }
+
+    char *strtab = malloc(strtab_size);
+    strtab[0] = 0;
+    size_t strtab_idx = 1;
+
+    uint64_t text_start = elf.phdrs[1].p_vaddr + text_offset;
+
+    Elf64_Sym *symtab = malloc((1 + buf->export.len) * sizeof(Elf64_Sym));
+    memset(symtab, 0, sizeof(Elf64_Sym));
+    size_t symtab_offset = openasm_align_up(bss_offset + bss_size, 16);
+    size_t symtab_size = sizeof(Elf64_Sym);
+
+    // first the local symbols
+    size_t symtab_idx = 1;
+    for (size_t i = 0; i < buf->export.len; i++) {
+        if (!buf->export.table[i].defined || buf->export.table[i].binding != OPENASM_BIND_LOCAL) {
+            continue;
+        }
+        symtab[symtab_idx].st_name = strtab_idx;
+        strcpy(strtab + strtab_idx, buf->export.table[i].sym);
+        strtab_idx += strlen(buf->export.table[i].sym) + 1;
+        symtab[symtab_idx].st_value = text_start + buf->export.table[i].addr;
+        symtab[symtab_idx].st_size = buf->export.table[i].size;
+        symtab[symtab_idx].st_info = ELF64_ST_INFO(STB_LOCAL, STT_FUNC); // TODO: other symbol types
+        symtab[symtab_idx].st_other = 0;
+        symtab[symtab_idx].st_shndx = 1; // TODO: section numbers
+        ++symtab_idx;
+        symtab_size += sizeof(Elf64_Sym);
+    }
+    
+    uint32_t symtab_info = symtab_idx;
+
+    // then weak and global
+    for (size_t i = 0; i < buf->export.len; i++) {
+        if (!buf->export.table[i].defined
+            || buf->export.table[i].binding == OPENASM_BIND_PRIVATE
+            || buf->export.table[i].binding == OPENASM_BIND_LOCAL) {
+            continue;
+        }
+        symtab[symtab_idx].st_name = strtab_idx;
+        strcpy(strtab + strtab_idx, buf->export.table[i].sym);
+        strtab_idx += strlen(buf->export.table[i].sym) + 1;
+        symtab[symtab_idx].st_value = text_start + buf->export.table[i].addr;
+        symtab[symtab_idx].st_size = buf->export.table[i].size;
+        unsigned char binding = 1;
+        switch (buf->export.table[i].binding) {
+        case OPENASM_BIND_GLOBAL:
+            binding = STB_GLOBAL;
+            break;
+        case OPENASM_BIND_WEAK:
+            binding = STB_WEAK;
+            break;
+        }
+        symtab[symtab_idx].st_info = ELF64_ST_INFO(binding, STT_FUNC); // TODO: other symbol types
+        symtab[symtab_idx].st_other = 0;
+        symtab[symtab_idx].st_shndx = 1; // TODO: section numbers
+        ++symtab_idx;
+        symtab_size += sizeof(Elf64_Sym);
+    }
+
+    size_t strtab_offset = openasm_align_up(symtab_offset + symtab_size, 16);
+
     const char *shstrtab =
         "\0" // 0
         ".text\0" // 1
         ".rodata\0" // 7
         ".data\0" // 15
         ".bss\0" // 21
-        ".shstrtab\0"; // 26
-    size_t shstrtab_offset = openasm_align_up(bss_offset + bss_size, 16);
-    size_t shstrtab_size = 36;
+        ".shstrtab\0" // 26
+        ".symtab\0" // 36
+        ".strtab\0"; // 44
+    size_t shstrtab_offset = openasm_align_up(strtab_offset + strtab_size, 16);
+    size_t shstrtab_size = 52;
     const void *shstrtab_ptr = shstrtab;
     
     size_t shdr_offset = openasm_align_up(shstrtab_offset + shstrtab_size, 16);
@@ -368,11 +483,22 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.shdrs[4].sh_offset = bss_offset;
     elf.shdrs[4].sh_addr += bss_offset;
     elf.shdrs[4].sh_size = bss_size;
+
+    elf.shdrs[5].sh_name = 36;
+    elf.shdrs[5].sh_offset = symtab_offset;
+    elf.shdrs[5].sh_addr += symtab_offset;
+    elf.shdrs[5].sh_size = symtab_size;
+    elf.shdrs[5].sh_info = symtab_info;
+
+    elf.shdrs[6].sh_name = 44;
+    elf.shdrs[6].sh_offset = strtab_offset;
+    elf.shdrs[6].sh_addr += strtab_offset;
+    elf.shdrs[6].sh_size = strtab_size;
     
-    elf.shdrs[5].sh_name = 26;
-    elf.shdrs[5].sh_offset = shstrtab_offset;
-    elf.shdrs[5].sh_addr += shstrtab_offset;
-    elf.shdrs[5].sh_size = shstrtab_size;
+    elf.shdrs[7].sh_name = 26;
+    elf.shdrs[7].sh_offset = shstrtab_offset;
+    elf.shdrs[7].sh_addr += shstrtab_offset;
+    elf.shdrs[7].sh_size = shstrtab_size;
 
     uint8_t padding[16];
 
@@ -392,6 +518,14 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     pad = data_offset - count;
     count += fwrite(padding, 1, pad, fileout);
     count += fwrite(data_ptr, 1, data_size, fileout);
+
+    pad = symtab_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(symtab, 1, symtab_size, fileout);
+
+    pad = strtab_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(strtab, 1, strtab_size, fileout);
 
     pad = shstrtab_offset - count;
     count += fwrite(padding, 1, pad, fileout);

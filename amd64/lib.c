@@ -20,7 +20,11 @@ void openasm_buffer(OpenasmBuffer *buf) {
     buf->symtable.cap = cap;
     buf->symtable.len = 0;
     buf->symtable.table = malloc(cap * sizeof(struct OpenasmSymbol));
-    
+
+    buf->export.cap = cap;
+    buf->export.len = 0;
+    buf->export.table = malloc(cap * sizeof(struct OpenasmSymbol));
+
     buf->has_legacy_prefix = 0;
     buf->has_rex_prefix = 0;
     buf->has_opcode = 0;

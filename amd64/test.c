@@ -9,7 +9,7 @@ int main() {
     openasm_buffer(&buf);
     const char *reg0 = "r8";
     const char *reg1 = "r9";
-    /* uint64_t _start = openasm_current_addr(&buf); */
+    uint64_t _start = openasm_current_addr(&buf);
     status |= openasm_instf(&buf, "mov %r, %i64", "rbp", 0);
     status |= openasm_instf(&buf, "call %p", "text", "fun");
     status |= openasm_instf(&buf, "mov %r, %i64", "rdi", 0);
@@ -22,8 +22,10 @@ int main() {
     status |= openasm_instf(&buf, "add %r, %r", reg0, reg1);
     status |= openasm_instf(&buf, "mov %r, %r", "rax", reg0);
     status |= openasm_instf(&buf, "ret");
+    uint64_t end = openasm_current_addr(&buf);
 
-    openasm_symbol(&buf, "text", "fun", fun);
+    openasm_symbol(&buf, "text", "_start", OPENASM_BIND_GLOBAL, _start, fun - _start);
+    openasm_symbol(&buf, "text", "fun", OPENASM_BIND_LOCAL, fun, end - fun);
     openasm_link(&buf);
 
     if (status) {

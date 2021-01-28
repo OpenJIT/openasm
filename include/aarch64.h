@@ -34,6 +34,7 @@ struct OpenasmBuffer {
 
     int sym;
     struct OpenasmSymbolTable symtable;
+    struct OpenasmSymbolTable export;
 };
 
 struct OpenasmEntry {
@@ -612,7 +613,7 @@ uint64_t openasm_current_addr(OpenasmBuffer *buf);
 // `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
 // Must be used after all uses of the symbol were emitted, or it will otherwise create
 // erroneous results.
-bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr);
+bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, int binding, uint64_t addr, uint64_t size);
 // Returns 1 if some symbol was not defined, but only emits a warning if one wasn't.
 int openasm_link(OpenasmBuffer *buf);
 int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf);
