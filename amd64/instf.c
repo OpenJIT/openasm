@@ -676,6 +676,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                     buf->symtable.table[buf->symtable.len].bits = 0;
                     buf->symtable.table[buf->symtable.len].offset = 0;
                     buf->symtable.table[buf->symtable.len].addr = 0;
+                    buf->symtable.table[buf->symtable.len].func = OPENASM_SYM_FUNC_DEFAULT;
                     buf->symtable.table[buf->symtable.len++].rel = 0;
                     operands[arity].imm = 0;
                     if (fmt[1] == '8') {
@@ -730,6 +731,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                     buf->symtable.table[buf->symtable.len].bits = 0;
                     buf->symtable.table[buf->symtable.len].offset = 0;
                     buf->symtable.table[buf->symtable.len].addr = 0;
+                    buf->symtable.table[buf->symtable.len].func = OPENASM_SYM_FUNC_DEFAULT;
                     buf->symtable.table[buf->symtable.len++].rel = 1;
                     operands[arity].imm = 0;
                     operands[arity++].tag = OPENASM_OP_IMM32;

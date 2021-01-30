@@ -3,6 +3,7 @@
 #include "include/openasm.h"
 
 #define DEFAULT_BUFFER_CAP ((size_t) 16384)
+#define TEXT_OFFSET (0x400000 + OPENASM_ELF_TEXT_OFFSET)
 
 void openasm_section(OpenasmBuffer *buf, const char *section) {
     for (size_t i = 0; i < buf->len; i++) {
@@ -43,6 +44,18 @@ uint64_t openasm_current_addr(OpenasmBuffer *buf) {
     return buf->sections[buf->section].len;
 }
 
+void openasm_reserve_symbol(OpenasmBuffer *buf, const char *src_section, const char *addr_section, const char *sym, uint64_t offset, size_t bits, int rel, int func) {
+    buf->symtable.table[buf->symtable.len].src_section = src_section;
+    buf->symtable.table[buf->symtable.len].addr_section = addr_section;
+    buf->symtable.table[buf->symtable.len].sym = sym;
+    buf->symtable.table[buf->symtable.len].defined = 0;
+    buf->symtable.table[buf->symtable.len].bits = bits;
+    buf->symtable.table[buf->symtable.len].offset = offset;
+    buf->symtable.table[buf->symtable.len].addr = 0;
+    buf->symtable.table[buf->symtable.len].func = func;
+    buf->symtable.table[buf->symtable.len++].rel = rel;
+}
+
 bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, int binding, uint64_t addr, uint64_t size) {
     bool used = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
@@ -74,7 +87,22 @@ bool openasm_symbol(OpenasmBuffer *buf, const char *section, const char *sym, in
     return used;
 }
 
+// NOTE: this function currently assumes ELF and a base offset of 0x400000
 int openasm_link(OpenasmBuffer *buf) {
+    size_t text_offset = TEXT_OFFSET;
+    openasm_section(buf, "text");
+    size_t rodata_offset = text_offset + buf->sections[buf->section].len;
+    openasm_section(buf, "rodata");
+    size_t data_offset = rodata_offset + buf->sections[buf->section].len;
+    openasm_section(buf, "data");
+    size_t bss_offset = data_offset + buf->sections[buf->section].len;
+    openasm_section(buf, "bss");
+    size_t debug_abbrev_offset = bss_offset + buf->sections[buf->section].len;
+    openasm_section(buf, "debug_abbrev");
+    size_t debug_info_offset = debug_abbrev_offset + buf->sections[buf->section].len;
+    openasm_section(buf, "debug_info");
+    size_t debug_line_offset = debug_info_offset + buf->sections[buf->section].len;
+    
     int status = 0;
     for (size_t i = 0; i < buf->symtable.len; i++) {
         if (!buf->symtable.table[i].defined) {
@@ -82,27 +110,77 @@ int openasm_link(OpenasmBuffer *buf) {
             fprintf(stderr, "warning: undefined symbol: %s\n", buf->symtable.table[i].sym);
             continue;
         }
-        openasm_section(buf, buf->symtable.table[i].src_section);
+        const char *src_section = buf->symtable.table[i].src_section;
+        const char *addr_section = buf->symtable.table[i].addr_section;
+        openasm_section(buf, src_section);
         int rel = buf->symtable.table[i].rel;
         size_t size = buf->symtable.table[i].bits >> 3;
-        uint64_t offset = buf->symtable.table[i].offset;
-        uint64_t addr = buf->symtable.table[i].addr;
+        uint64_t src_section_offset = 0;
+        uint64_t addr_section_offset = 0;
+        if (strcmp(src_section, "text") == 0) {
+            src_section_offset = text_offset;
+        } else if (strcmp(src_section, "rodata") == 0) {
+            src_section_offset = rodata_offset;
+        } else if (strcmp(src_section, "data") == 0) {
+            src_section_offset = data_offset;
+        } else if (strcmp(src_section, "bss") == 0) {
+            src_section_offset = bss_offset;
+        } else if (strcmp(src_section, "debug_abbrev") == 0) {
+            src_section_offset = debug_abbrev_offset;
+        } else if (strcmp(src_section, "debug_info") == 0) {
+            src_section_offset = debug_info_offset;
+        } else if (strcmp(src_section, "debug_line") == 0) {
+            src_section_offset = debug_line_offset;
+        }
+        if (strcmp(addr_section, "text") == 0) {
+            addr_section_offset = text_offset;
+        } else if (strcmp(addr_section, "rodata") == 0) {
+            addr_section_offset = rodata_offset;
+        } else if (strcmp(addr_section, "data") == 0) {
+            addr_section_offset = data_offset;
+        } else if (strcmp(addr_section, "bss") == 0) {
+            addr_section_offset = bss_offset;
+        } else if (strcmp(addr_section, "debug_abbrev") == 0) {
+            addr_section_offset = debug_abbrev_offset;
+        } else if (strcmp(addr_section, "debug_info") == 0) {
+            addr_section_offset = debug_info_offset;
+        } else if (strcmp(addr_section, "debug_line") == 0) {
+            addr_section_offset = debug_line_offset;
+        }
+        uint64_t offset = src_section_offset + buf->symtable.table[i].offset;
+        uint64_t addr = addr_section_offset + buf->symtable.table[i].addr;
         if (rel) {
             addr = addr - (offset + size);
         }
-        uint8_t *ptr = buf->sections[buf->section].buffer + offset;
+        uint8_t *ptr = buf->sections[buf->section].buffer + offset - src_section_offset;
         switch (buf->symtable.table[i].bits) {
         case 8:
-            *ptr = addr & 0xff;
+            if (buf->symtable.table[i].func == OPENASM_SYM_FUNC_ADD) {
+                *ptr += addr & 0xff;
+            } else {
+                *ptr = addr & 0xff;
+            }
             break;
         case 16:
-            *((uint16_t *) ptr) = addr & 0xffff;
+            if (buf->symtable.table[i].func == OPENASM_SYM_FUNC_ADD) {
+                *((uint16_t *) ptr) += addr & 0xffff;
+            } else {
+                *((uint16_t *) ptr) = addr & 0xffff;
+            }
             break;
         case 32:
-            *((uint32_t *) ptr) = addr & 0xffffffff;
+            if (buf->symtable.table[i].func == OPENASM_SYM_FUNC_ADD) {
+                *((uint32_t *) ptr) += addr & 0xffffffff;
+            } else {
+                *((uint32_t *) ptr) = addr & 0xffffffff;
+            }
             break;
         case 64:
-            *((uint64_t *) ptr) = addr;
+            if (buf->symtable.table[i].func == OPENASM_SYM_FUNC_ADD) {
+                *((uint64_t *) ptr) += addr;
+            } else {
+                *((uint64_t *) ptr) = addr;
+            }
             break;
         default:
             /* unreachable */

@@ -10,6 +10,9 @@ void openasm_buffer(OpenasmBuffer *buf) {
     buf->len = 0;
     buf->sections = malloc(cap * sizeof(struct OpenasmSection));
 
+    openasm_section(buf, "debug_info");
+    openasm_section(buf, "debug_line");
+    openasm_section(buf, "debug_abbrev");
     openasm_section(buf, "rodata");
     openasm_section(buf, "data");
     openasm_section(buf, "bss");

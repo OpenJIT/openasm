@@ -37,15 +37,20 @@ typedef void *(*OpenasmFnvp)();
 #define OPENASM_ELF_EXEC 1
 #define OPENASM_ELF_REL 0
 
+#define OPENASM_ELF_PHDRS 5
+#define OPENASM_ELF_SHDRS 11
+#define OPENASM_ELF_TEXT_OFFSET openasm_align_up(sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr [OPENASM_ELF_PHDRS]), 16)
+
 struct OpenasmElf {
     Elf64_Ehdr ehdr;
-    Elf64_Phdr phdrs[5];
-    Elf64_Shdr shdrs[11];
+    Elf64_Phdr phdrs[OPENASM_ELF_PHDRS];
+    Elf64_Shdr shdrs[OPENASM_ELF_SHDRS];
     /* Elf64_Dyn dyns[0]; */
 };
 
 enum {
     OPENASM_SYM_FUNC_DEFAULT,
+    OPENASM_SYM_FUNC_ADD,
     OPENASM_SYM_FUNC_SHIFT_MASK,
     OPENASM_SYM_FUNC_SPLIT_SHIFT_MASK,
 };
@@ -118,6 +123,7 @@ typedef void (*openasm_section_f)(OpenasmBuffer *buf, const char *section);
     
 typedef uint64_t (*openasm_addr_of_f)(OpenasmBuffer *buf, uint8_t *inst);
 typedef uint64_t (*openasm_current_addr_f)(OpenasmBuffer *buf);
+typedef void (*openasm_reserve_symbol_f)(OpenasmBuffer *buf, const char *src_section, const char *addr_section, const char *sym, uint64_t offset, size_t bits, int rel, int func);
 typedef bool (*openasm_symbol_f)(OpenasmBuffer *buf, const char *section, const char *sym, int binding, uint64_t addr, uint64_t size);
 typedef int (*openasm_link_f)(OpenasmBuffer *buf);
 typedef int (*openasm_elfdump_f)(FILE *fileout, int flags, OpenasmBuffer *buf);

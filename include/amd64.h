@@ -542,6 +542,7 @@ bool openasm_section_exists(OpenasmBuffer *buf, const char *section);
     
 uint64_t openasm_addr_of(OpenasmBuffer *buf, uint8_t *inst);
 uint64_t openasm_current_addr(OpenasmBuffer *buf);
+void openasm_reserve_symbol(OpenasmBuffer *buf, const char *src_section, const char *addr_section, const char *sym, uint64_t offset, size_t bits, int rel, int func);
 // `openasm_symbol` returns whether that symbol was used, not whether that symbol is valid.
 // Must be used after all uses of the symbol were emitted, or it will otherwise create
 // erroneous results.
