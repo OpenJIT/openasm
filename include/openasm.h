@@ -118,7 +118,7 @@ typedef void (*openasm_section_f)(OpenasmBuffer *buf, const char *section);
     
 typedef uint64_t (*openasm_addr_of_f)(OpenasmBuffer *buf, uint8_t *inst);
 typedef uint64_t (*openasm_current_addr_f)(OpenasmBuffer *buf);
-typedef bool (*openasm_symbol_f)(OpenasmBuffer *buf, const char *section, const char *sym, uint64_t addr);
+typedef bool (*openasm_symbol_f)(OpenasmBuffer *buf, const char *section, const char *sym, int binding, uint64_t addr, uint64_t size);
 typedef int (*openasm_link_f)(OpenasmBuffer *buf);
 typedef int (*openasm_elfdump_f)(FILE *fileout, int flags, OpenasmBuffer *buf);
 
