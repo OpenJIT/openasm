@@ -175,6 +175,36 @@ struct OpenasmDwLnoHeader {
 };
 #endif /* __GNUC__ */
 
+typedef void (*openasm_dw_debugdata_f)(OpenasmDebugData *debug);
+typedef void (*openasm_dw_at_array_f)(OpenasmDwAtArray *array);
+typedef void (*openasm_dw_lno_buffer_f)(OpenasmDwLineInfo *buf);
+typedef void (*openasm_dw_compunit_f)(OpenasmDebugData *debug, OpenasmDwCu *cu);
+typedef void (*openasm_dw_typeunit_f)(OpenasmDebugData *debug, OpenasmDwTu *tu);
+typedef void (*openasm_dw_lineinfo_f)(OpenasmDebugData *debug, OpenasmDwLnoHeader *lno);
+typedef size_t (*openasm_dw_lno_hdr_var_size_f)(struct OpenasmDwLnoVar *var);
+typedef void (*openasm_dw_lno_op_f)(OpenasmDwLineInfo *buf, uint8_t opcode);
+typedef void (*openasm_dw_lno_op_ext_f)(OpenasmDwLineInfo *buf, OpenasmLeb128 *size, uint8_t opcode);
+typedef void (*openasm_dw_lno_arg_f)(OpenasmDwLineInfo *buf, OpenasmLeb128 *arg);
+typedef void (*openasm_dw_lno_arg8_f)(OpenasmDwLineInfo *buf, uint64_t arg);
+typedef uint64_t (*openasm_dw_abbrev_offset_f)(OpenasmDebugData *debug);
+typedef void (*openasm_dw_abbrev_leb128_f)(OpenasmDebugData *debug, OpenasmLeb128 *num);
+typedef void (*openasm_dw_abbrev_entry_f)(OpenasmDebugData *debug, OpenasmLeb128 *code, uint8_t children);
+typedef void (*openasm_dw_abbrev_tag_f)(OpenasmDebugData *debug, OpenasmLeb128 *name, OpenasmLeb128 *form);
+typedef void (*openasm_dw_abbrev_end_f)(OpenasmDebugData *debug);
+typedef void (*openasm_dw_abbrev_terminate_f)(OpenasmDebugData *debug);
+typedef void (*openasm_dw_at_leb128_f)(OpenasmDwAtArray *array, OpenasmLeb128 *num);
+typedef void (*openasm_dw_at_string_f)(OpenasmDwAtArray *array, const char *str);
+typedef void (*openasm_dw_at_data8_f)(OpenasmDwAtArray *array, uint64_t val);
+typedef void (*openasm_dw_at_data4_f)(OpenasmDwAtArray *array, uint32_t val);
+typedef void (*openasm_dw_at_data2_f)(OpenasmDwAtArray *array, uint16_t val);
+typedef void (*openasm_dw_at_data1_f)(OpenasmDwAtArray *array, uint8_t val);
+typedef size_t (*openasm_dw_copy_leb128_f)(void *dst, OpenasmLeb128 *src);
+typedef size_t (*openasm_dw_sizeof_leb128_f)(OpenasmLeb128 *src);
+typedef OpenasmLeb128 *(*openasm_dw_uleb128_f)(OpenasmLeb128 *dest, uint64_t value);
+typedef OpenasmLeb128 *(*openasm_dw_sleb128_f)(OpenasmLeb128 *dest, int64_t value);
+typedef uint64_t (*openasm_dw_uleb128_to_uint_f)(OpenasmLeb128 *dest);
+typedef int64_t (*openasm_dw_sleb128_to_int_f)(OpenasmLeb128 *dest);
+
 void openasm_dw_debugdata(OpenasmDebugData *debug);
 void openasm_dw_at_array(OpenasmDwAtArray *array);
 void openasm_dw_lno_buffer(OpenasmDwLineInfo *buf);
