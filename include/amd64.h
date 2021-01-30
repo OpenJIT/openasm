@@ -538,6 +538,7 @@ uint64_t openasm_data(OpenasmBuffer *buf, size_t len, void *ptr);
 uint64_t openasm_res(OpenasmBuffer *buf, size_t len);
 
 void openasm_section(OpenasmBuffer *buf, const char *section);
+bool openasm_section_exists(OpenasmBuffer *buf, const char *section);
     
 uint64_t openasm_addr_of(OpenasmBuffer *buf, uint8_t *inst);
 uint64_t openasm_current_addr(OpenasmBuffer *buf);

@@ -25,6 +25,15 @@ void openasm_section(OpenasmBuffer *buf, const char *section) {
     buf->section = buf->len++;
 }
 
+bool openasm_section_exists(OpenasmBuffer *buf, const char *section) {
+    for (size_t i = 0; i < buf->len; i++) {
+        if (strcmp(buf->sections[i].name, section) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 uint64_t openasm_addr_of(OpenasmBuffer *buf, uint32_t *inst) {
     return (uint64_t) inst - (uint64_t) buf->sections[buf->section].buffer;
 }
@@ -166,8 +175,8 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
             .e_phentsize = 56         , /* (bytes) */
             .e_phnum     = 5          , /* (program headers) */
             .e_shentsize = 64         , /* (bytes) */
-            .e_shnum     = 8          , /* (section headers) */
-            .e_shstrndx  = 7        
+            .e_shnum     = 11          , /* (section headers) */
+            .e_shstrndx  = 10
         },
         .phdrs = {
             // (elf and program headers)
@@ -292,6 +301,45 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
                 .sh_addralign = 32         ,
                 .sh_entsize   = 0         
             },
+            // .debug_info
+            {
+                .sh_name      = 0           ,
+                .sh_type      = SHT_PROGBITS,
+                .sh_flags     = 0           ,
+                .sh_addr      = 0x000000    ,
+                .sh_offset    = 0           , /* (bytes) */
+                .sh_size      = 0           , /* (bytes) */
+                .sh_link      = 0           ,
+                .sh_info      = 0           ,
+                .sh_addralign = 16          ,
+                .sh_entsize   = 0         
+            },
+            // .debug_abbrev
+            {
+                .sh_name      = 0           ,
+                .sh_type      = SHT_PROGBITS,
+                .sh_flags     = 0           ,
+                .sh_addr      = 0x000000    ,
+                .sh_offset    = 0           , /* (bytes) */
+                .sh_size      = 0           , /* (bytes) */
+                .sh_link      = 0           ,
+                .sh_info      = 0           ,
+                .sh_addralign = 16          ,
+                .sh_entsize   = 0         
+            },
+            // .debug_line
+            {
+                .sh_name      = 0           ,
+                .sh_type      = SHT_PROGBITS,
+                .sh_flags     = 0           ,
+                .sh_addr      = 0x000000    ,
+                .sh_offset    = 0           , /* (bytes) */
+                .sh_size      = 0           , /* (bytes) */
+                .sh_link      = 0           ,
+                .sh_info      = 0           ,
+                .sh_addralign = 16          ,
+                .sh_entsize   = 0         
+            },
             // .symtab
             {
                 .sh_name      = 0          ,
@@ -300,7 +348,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
                 .sh_addr      = 0x0        ,
                 .sh_offset    = 0          , /* (bytes) */
                 .sh_size      = 0          , /* (bytes) */
-                .sh_link      = 6          ,
+                .sh_link      = 9          ,
                 .sh_info      = 0          ,
                 .sh_addralign = 8          ,
                 .sh_entsize   = sizeof(Elf64_Sym)         
@@ -351,6 +399,34 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     openasm_section(buf, "bss");
     size_t bss_offset = openasm_align_up(rodata_offset + rodata_size, 16);
     size_t bss_size = buf->sections[buf->section].len * sizeof(uint32_t);
+    size_t debug_info_offset = bss_offset;
+    size_t debug_info_size = 0;
+    void *debug_info_ptr = NULL;
+    if (openasm_section_exists(buf, "debug_info")) {
+        openasm_section(buf, "debug_info");
+        debug_info_offset = openasm_align_up(bss_offset + bss_size, 16);
+        debug_info_size = buf->sections[buf->section].len * sizeof(uint32_t);
+        debug_info_ptr = buf->sections[buf->section].buffer;
+    }
+    size_t debug_abbrev_offset = bss_offset;
+    size_t debug_abbrev_size = 0;
+    void *debug_abbrev_ptr = NULL;
+    if (openasm_section_exists(buf, "debug_abbrev")) {
+        openasm_section(buf, "debug_abbrev");
+        debug_abbrev_offset = openasm_align_up(debug_info_offset + debug_info_size, 16);
+        debug_abbrev_size = buf->sections[buf->section].len * sizeof(uint32_t);
+        debug_abbrev_ptr = buf->sections[buf->section].buffer;
+    }
+    size_t debug_line_offset = bss_offset;
+    size_t debug_line_size = 0;
+    void *debug_line_ptr = NULL;
+    if (openasm_section_exists(buf, "debug_line")) {
+        openasm_section(buf, "debug_line");
+        debug_line_offset = openasm_align_up(debug_abbrev_offset + debug_abbrev_size, 16);
+        debug_line_size = buf->sections[buf->section].len * sizeof(uint32_t);
+        debug_line_ptr = buf->sections[buf->section].buffer;
+    }
+
     size_t strtab_size = 1;
     for (size_t i = 0; i < buf->export.len; i++) {
         if (!buf->export.table[i].defined || buf->export.table[i].binding == OPENASM_BIND_PRIVATE) {
@@ -367,7 +443,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
 
     Elf64_Sym *symtab = malloc((1 + buf->export.len) * sizeof(Elf64_Sym));
     memset(symtab, 0, sizeof(Elf64_Sym));
-    size_t symtab_offset = openasm_align_up(bss_offset + bss_size, 16);
+    size_t symtab_offset = openasm_align_up(debug_line_offset + debug_line_size, 16);
     size_t symtab_size = sizeof(Elf64_Sym);
 
     // first the local symbols
@@ -420,18 +496,31 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
 
     size_t strtab_offset = openasm_align_up(symtab_offset + symtab_size, 16);
 
-    const char *shstrtab =
-        "\0" // 0
-        ".text\0" // 1
-        ".rodata\0" // 7
-        ".data\0" // 15
-        ".bss\0" // 21
-        ".shstrtab\0" // 26
-        ".symtab\0" // 36
-        ".strtab\0"; // 44
-    size_t shstrtab_offset = openasm_align_up(strtab_offset + strtab_size, 16);
-    size_t shstrtab_size = 52;
+    char *shstrtab = malloc(128);
+    size_t shstrtab_size = 0;
+#define def_sname(s) \
+    size_t s##_name = shstrtab_size; \
+    const char *s##_name_str = "." openasm_stringify(s); \
+    strcpy(shstrtab + shstrtab_size, s##_name_str); \
+    shstrtab_size += strlen(s##_name_str) + 1;
+
+    size_t nul_name = 0;
+    shstrtab[0] = 0;
+    shstrtab_size += 1;
+    
+    def_sname(text);
+    def_sname(rodata);
+    def_sname(data);
+    def_sname(bss);
+    def_sname(debug_info);
+    def_sname(debug_abbrev);
+    def_sname(debug_line);
+    def_sname(strtab);
+    def_sname(symtab);
+    def_sname(shstrtab);
+    
     const void *shstrtab_ptr = shstrtab;
+    size_t shstrtab_offset = openasm_align_up(strtab_offset + strtab_size, 16);
     
     size_t shdr_offset = openasm_align_up(shstrtab_offset + shstrtab_size, 16);
     size_t shdr_size = sizeof(struct OpenasmElf) - offsetof(struct OpenasmElf, shdrs);
@@ -440,7 +529,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.ehdr.e_phoff = phdr_offset;
     elf.ehdr.e_shoff = shdr_offset;
 
-    elf.shdrs[0].sh_name = 0;
+    elf.shdrs[0].sh_name = nul_name;
 
     elf.ehdr.e_entry += text_offset;
     elf.phdrs[1].p_offset = text_offset;
@@ -448,7 +537,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.phdrs[1].p_paddr += text_offset;
     elf.phdrs[1].p_filesz = text_size;
     elf.phdrs[1].p_memsz = text_size;
-    elf.shdrs[1].sh_name = 1;
+    elf.shdrs[1].sh_name = text_name;
     elf.shdrs[1].sh_offset = text_offset;
     elf.shdrs[1].sh_addr += text_offset;
     elf.shdrs[1].sh_size = text_size;
@@ -458,7 +547,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.phdrs[2].p_paddr += rodata_offset;
     elf.phdrs[2].p_filesz = rodata_size;
     elf.phdrs[2].p_memsz = rodata_size;
-    elf.shdrs[2].sh_name = 7;
+    elf.shdrs[2].sh_name = rodata_name;
     elf.shdrs[2].sh_offset = rodata_offset;
     elf.shdrs[2].sh_addr += rodata_offset;
     elf.shdrs[2].sh_size = rodata_size;
@@ -468,7 +557,7 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.phdrs[3].p_paddr += data_offset;
     elf.phdrs[3].p_filesz = data_size;
     elf.phdrs[3].p_memsz = data_size;
-    elf.shdrs[3].sh_name = 15;
+    elf.shdrs[3].sh_name = data_name;
     elf.shdrs[3].sh_offset = data_offset;
     elf.shdrs[3].sh_addr += data_offset;
     elf.shdrs[3].sh_size = data_size;
@@ -478,28 +567,40 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     elf.phdrs[4].p_paddr += bss_offset;
     elf.phdrs[4].p_filesz = 0;
     elf.phdrs[4].p_memsz = bss_size;
-    elf.shdrs[4].sh_name = 21;
+    elf.shdrs[4].sh_name = bss_name;
     elf.shdrs[4].sh_offset = bss_offset;
     elf.shdrs[4].sh_addr += bss_offset;
     elf.shdrs[4].sh_size = bss_size;
-    
-    elf.shdrs[5].sh_name = 36;
-    elf.shdrs[5].sh_offset = symtab_offset;
-    elf.shdrs[5].sh_addr += symtab_offset;
-    elf.shdrs[5].sh_size = symtab_size;
-    elf.shdrs[5].sh_info = symtab_info;
 
-    elf.shdrs[6].sh_name = 44;
-    elf.shdrs[6].sh_offset = strtab_offset;
-    elf.shdrs[6].sh_addr += strtab_offset;
-    elf.shdrs[6].sh_size = strtab_size;
-    
-    elf.shdrs[7].sh_name = 26;
-    elf.shdrs[7].sh_offset = shstrtab_offset;
-    elf.shdrs[7].sh_addr += shstrtab_offset;
-    elf.shdrs[7].sh_size = shstrtab_size;
+    elf.shdrs[5].sh_name = debug_info_name;
+    elf.shdrs[5].sh_offset = debug_info_offset;
+    elf.shdrs[5].sh_size = debug_info_size;
 
-    uint8_t padding[16];
+    elf.shdrs[6].sh_name = debug_abbrev_name;
+    elf.shdrs[6].sh_offset = debug_abbrev_offset;
+    elf.shdrs[6].sh_size = debug_abbrev_size;
+    
+    elf.shdrs[7].sh_name = debug_line_name;
+    elf.shdrs[7].sh_offset = debug_line_offset;
+    elf.shdrs[7].sh_size = debug_line_size;
+
+    elf.shdrs[8].sh_name = symtab_name;
+    elf.shdrs[8].sh_offset = symtab_offset;
+    elf.shdrs[8].sh_addr += symtab_offset;
+    elf.shdrs[8].sh_size = symtab_size;
+    elf.shdrs[8].sh_info = symtab_info;
+
+    elf.shdrs[9].sh_name = strtab_name;
+    elf.shdrs[9].sh_offset = strtab_offset;
+    elf.shdrs[9].sh_addr += strtab_offset;
+    elf.shdrs[9].sh_size = strtab_size;
+    
+    elf.shdrs[10].sh_name = shstrtab_name;
+    elf.shdrs[10].sh_offset = shstrtab_offset;
+    elf.shdrs[10].sh_addr += shstrtab_offset;
+    elf.shdrs[10].sh_size = shstrtab_size;
+
+    uint8_t padding[16] = {0};
 
     size_t count = 0;
     size_t pad = 0;
@@ -517,6 +618,18 @@ int openasm_elfdump(FILE *fileout, int flags, OpenasmBuffer *buf) {
     pad = data_offset - count;
     count += fwrite(padding, 1, pad, fileout);
     count += fwrite(data_ptr, 1, data_size, fileout);
+
+    pad = debug_info_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(debug_info_ptr, 1, debug_info_size, fileout);
+
+    pad = debug_abbrev_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(debug_abbrev_ptr, 1, debug_abbrev_size, fileout);
+
+    pad = debug_line_offset - count;
+    count += fwrite(padding, 1, pad, fileout);
+    count += fwrite(debug_line_ptr, 1, debug_line_size, fileout);
 
     pad = symtab_offset - count;
     count += fwrite(padding, 1, pad, fileout);

@@ -40,7 +40,7 @@ typedef void *(*OpenasmFnvp)();
 struct OpenasmElf {
     Elf64_Ehdr ehdr;
     Elf64_Phdr phdrs[5];
-    Elf64_Shdr shdrs[8];
+    Elf64_Shdr shdrs[11];
     /* Elf64_Dyn dyns[0]; */
 };
 
