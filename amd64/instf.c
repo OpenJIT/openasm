@@ -274,7 +274,7 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_REG16:
         case OPENASM_OP_REG32:
         case OPENASM_OP_REG64:
-            op->reg = openasm_match_reg(op->reg, 8);
+            op->reg.reg = openasm_match_reg(op->reg.reg, 8);
             return OPENASM_OP_REG8;
         case OPENASM_OP_IMM8:
         case OPENASM_OP_IMM16:
@@ -295,7 +295,7 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_REG16:
         case OPENASM_OP_REG32:
         case OPENASM_OP_REG64:
-            op->reg = openasm_match_reg(op->reg, 16);
+            op->reg.reg = openasm_match_reg(op->reg.reg, 16);
             return OPENASM_OP_REG16;
         case OPENASM_OP_IMM8:
         case OPENASM_OP_IMM16:
@@ -316,7 +316,7 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_REG16:
         case OPENASM_OP_REG32:
         case OPENASM_OP_REG64:
-            op->reg = openasm_match_reg(op->reg, 32);
+            op->reg.reg = openasm_match_reg(op->reg.reg, 32);
             return OPENASM_OP_REG32;
         case OPENASM_OP_IMM8:
         case OPENASM_OP_IMM16:
@@ -337,7 +337,7 @@ static int openasm_match_opsize(OpenasmOperand *op, int tag) {
         case OPENASM_OP_REG16:
         case OPENASM_OP_REG32:
         case OPENASM_OP_REG64:
-            op->reg = openasm_match_reg(op->reg, 64);
+            op->reg.reg = openasm_match_reg(op->reg.reg, 64);
             return OPENASM_OP_REG64;
         case OPENASM_OP_IMM8:
         case OPENASM_OP_IMM16:
@@ -376,9 +376,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
     const char *ptr = fmt;
     char *mnemonic = malloc(strlen(fmt) + 1);
     OpenasmOperand operands[8] = {0};
-    int ext[3] = {0};
     size_t arity = 0;
-    size_t regs = 0;
 
     while (*fmt && *fmt != ' ') ++fmt;
 
@@ -399,27 +397,26 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                 ++fmt;
                 switch (*fmt) {
                 case '*': {
-                    int bext = 0;
-                    int iext = 0;
                     OpenasmOperand op = va_arg(args, struct OpenasmOperand);
                     if (op.tag == OPENASM_OP_REG8
                         || op.tag == OPENASM_OP_REG16
                         || op.tag == OPENASM_OP_REG32
                         || op.tag == OPENASM_OP_REG64) {
                         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
-                            if (strcmp(op.reg, reg->key) == 0) {
+                            if (strcmp(op.reg.reg, reg->key) == 0) {
                                 switch (reg->bits) {
                                 case 8:
-                                    ext[regs] = reg->ext;
+                                    op.reg.rexr = reg->ext;
                                     break;
                                 case 16:
-                                    ext[regs] = reg->ext;
+                                    op.reg.rexr = reg->ext;
                                     break;
                                 case 32:
-                                    ext[regs] = reg->ext;
+                                    op.reg.rexr = reg->ext;
                                     break;
                                 case 64:
-                                    ext[regs] = reg->ext;
+                                    op.reg.rexr = reg->ext;
+                                    op.reg.rexw = 1;
                                     break;
                                 default:
                                     /* unreachable */
@@ -433,19 +430,20 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                         || op.tag == OPENASM_OP_MEMORY32
                         || op.tag == OPENASM_OP_MEMORY64) {
                         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
-                            if (strcmp(op.mem.base, reg->key) == 0) {
+                            if (strcmp(op.mem.base.reg, reg->key) == 0) {
                                 switch (reg->bits) {
                                 case 8:
-                                    bext = reg->ext;
+                                    op.mem.base.rexr = reg->ext;
                                     break;
                                 case 16:
-                                    bext = reg->ext;
+                                    op.mem.base.rexr = reg->ext;
                                     break;
                                 case 32:
-                                    bext = reg->ext;
+                                    op.mem.base.rexr = reg->ext;
                                     break;
                                 case 64:
-                                    bext = reg->ext;
+                                    op.mem.base.rexr = reg->ext;
+                                    op.mem.base.rexw = 1;
                                     break;
                                 default:
                                     /* unreachable */
@@ -453,19 +451,20 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                                 }
                                 break;
                             }
-                            if (op.mem.index && strcmp(op.mem.index, reg->key) == 0) {
+                            if (op.mem.index.reg && strcmp(op.mem.index.reg, reg->key) == 0) {
                                 switch (reg->bits) {
                                 case 8:
-                                    iext = reg->ext;
+                                    op.mem.index.rexr = reg->ext;
                                     break;
                                 case 16:
-                                    iext = reg->ext;
+                                    op.mem.index.rexr = reg->ext;
                                     break;
                                 case 32:
-                                    iext = reg->ext;
+                                    op.mem.index.rexr = reg->ext;
                                     break;
                                 case 64:
-                                    iext = reg->ext;
+                                    op.mem.index.rexr = reg->ext;
+                                    op.mem.index.rexw = 1;
                                     break;
                                 default:
                                     /* unreachable */
@@ -475,45 +474,31 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                             }
                         }
                     }
-                    op.aux = 0;
                     operands[arity++] = op;
-                    if (bext) {
-                        operands[0].aux |= OPENASM_AUX_REXB;
-                    }
-                    if (iext) {
-                        operands[0].aux |= OPENASM_AUX_REXX;
-                    }
-                    if (regs == 0 && ext[regs]) {
-                        operands[0].aux |= OPENASM_AUX_REXR;
-                        ++regs;
-                    } else if (regs == 1 && ext[regs]) {
-                        operands[0].aux |= OPENASM_AUX_REXB;
-                        ++regs;
-                    } else {
-                        operands[0].aux |= OPENASM_AUX_NONE;
-                    }
                 } break;
                 case 'r': {
-                    const char *target = va_arg(args, char *);
+                    const char *target_ = va_arg(args, char *);
+                    struct OpenasmReg target = { .reg = target_, .rexr = 0, .rexw = 0 };
                     uint32_t tag = -1;
                     for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
-                        if (strcmp(target, reg->key) == 0) {
+                        if (strcmp(target.reg, reg->key) == 0) {
                             switch (reg->bits) {
                             case 8:
-                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG8;
+                                target.rexr = reg->ext;
                                 break;
                             case 16:
-                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG16;
+                                target.rexr = reg->ext;
                                 break;
                             case 32:
-                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG32;
+                                target.rexr = reg->ext;
                                 break;
                             case 64:
-                                ext[regs] = reg->ext;
                                 tag = OPENASM_OP_REG64;
+                                target.rexr = reg->ext;
+                                target.rexw = 1;
                                 break;
                             default:
                                 /* unreachable */
@@ -523,15 +508,7 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                         }
                     }
                     operands[arity].tag = tag;
-                    if (regs == 0 && ext[regs]) {
-                        operands[0].aux |= OPENASM_AUX_REXR;
-                    } else if (regs == 1 && ext[regs]) {
-                        operands[0].aux |= OPENASM_AUX_REXB;
-                    } else {
-                        operands[0].aux |= OPENASM_AUX_NONE;
-                    }
                     operands[arity++].reg = target;
-                    ++regs;
                 } break;
                 case 'i': {
                     uint64_t imm = va_arg(args, uint64_t);
@@ -572,23 +549,22 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                     }
                 } break;
                 case 'm': {
-                    int bext = 0;
-                    int iext = 0;
                     struct OpenasmMemory mem = va_arg(args, struct OpenasmMemory);
                     for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) {
-                        if (strcmp(mem.base, reg->key) == 0) {
+                        if (strcmp(mem.base.reg, reg->key) == 0) {
                             switch (reg->bits) {
                             case 8:
-                                bext = reg->ext;
+                                mem.base.rexr = reg->ext;
                                 break;
                             case 16:
-                                bext = reg->ext;
+                                mem.base.rexr = reg->ext;
                                 break;
                             case 32:
-                                bext = reg->ext;
+                                mem.base.rexr = reg->ext;
                                 break;
                             case 64:
-                                bext = reg->ext;
+                                mem.base.rexr = reg->ext;
+                                mem.base.rexw = 1;
                                 break;
                             default:
                                 /* unreachable */
@@ -596,19 +572,20 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                             }
                             break;
                         }
-                        if (mem.index && strcmp(mem.index, reg->key) == 0) {
+                        if (mem.index.reg && strcmp(mem.index.reg, reg->key) == 0) {
                             switch (reg->bits) {
                             case 8:
-                                iext = reg->ext;
+                                mem.index.rexr = reg->ext;
                                 break;
                             case 16:
-                                iext = reg->ext;
+                                mem.index.rexr = reg->ext;
                                 break;
                             case 32:
-                                iext = reg->ext;
+                                mem.index.rexr = reg->ext;
                                 break;
                             case 64:
-                                iext = reg->ext;
+                                mem.index.rexr = reg->ext;
+                                mem.index.rexw = 1;
                                 break;
                             default:
                                 /* unreachable */
@@ -616,12 +593,6 @@ int openasm_instfv(OpenasmBuffer *buf, const char *fmt, va_list args) {
                             }
                             break;
                         }
-                    }
-                    if (bext) {
-                        operands[0].aux |= OPENASM_AUX_REXB;
-                    }
-                    if (iext) {
-                        operands[0].aux |= OPENASM_AUX_REXX;
                     }
                     operands[arity].mem = mem;
                     if (fmt[1] == '8') {

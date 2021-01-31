@@ -424,14 +424,14 @@ void openasm_set_imm(uint8_t *inst, int bits, uint64_t imm) {
 
 #define SET_REGISTER(name, rr, bb) do { \
         for (struct OpenasmRegister *_reg = openasm_register; _reg->key; _reg++) { \
-            if (strcmp(name, _reg->key) == 0 && _reg->bits == bb) { \
+            if (strcmp(name.reg, _reg->key) == 0 && _reg->bits == bb) { \
                 rr = _reg->val; \
                 break; \
             } \
         } \
 \
         if (rr == (uint32_t) -1) { \
-            fprintf(stderr, "error: invalid target register: \"%s\"\n", name); \
+            fprintf(stderr, "error: invalid target register: \"%s\"\n", name.reg); \
             return 1; \
         } \
     } while (0)
@@ -456,7 +456,7 @@ void openasm_set_imm(uint8_t *inst, int bits, uint64_t imm) {
 
 #define SET_MEMORY_RM(op, aux) do { \
         uint32_t base_reg = -1; \
-        const char *base = op.mem.base; \
+        const char *base = op.mem.base.reg; \
  \
         for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) { \
             if (strcmp(base, reg->key) == 0 && reg->bits == 64) { \
@@ -471,7 +471,7 @@ void openasm_set_imm(uint8_t *inst, int bits, uint64_t imm) {
         } \
  \
         uint32_t index_reg = -1; \
-        const char *index = op.mem.index; \
+        const char *index = op.mem.index.reg; \
  \
         if (index) { \
             for (struct OpenasmRegister *reg = openasm_register; reg->key; reg++) { \
@@ -610,32 +610,40 @@ void openasm_set_imm(uint8_t *inst, int bits, uint64_t imm) {
     SET_REG_OR_MEM(op0, reg1, mm, bb);            \
 } while (0)
 
-#define REX_RM_R \
+#define REX_RM_R(rm, r) \
 uint8_t R; \
 do { \
-     if (op[0].tag == OPENASM_OP_MEMORY64) {                         \
-        R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXR : 0; \
-        R |= (op->aux & OPENASM_AUX_REXB)? OPENASM_PREFIX64_REXB : 0; \
-        R |= (op->aux & OPENASM_AUX_REXX)? OPENASM_PREFIX64_REXX : 0; \
+    if (rm.tag >= OPENASM_OP_MEMORY8 && rm.tag <= OPENASM_OP_MEMORY64) { \
+        R = rm.mem.base.rexr? OPENASM_PREFIX64_REXB : 0; \
+        R |= rm.mem.index.rexr? OPENASM_PREFIX64_REXX : 0; \
     } else { \
-        R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0; \
-        R |= (op->aux & OPENASM_AUX_REXB)? OPENASM_PREFIX64_REXR : 0; \
-        R |= (op->aux & OPENASM_AUX_REXX)? OPENASM_PREFIX64_REXX : 0; \
+        R = rm.reg.rexr? OPENASM_PREFIX64_REXB : 0; \
     } \
+    R |= r.reg.rexr? OPENASM_PREFIX64_REXR : 0; \
 } while (0)
 
-#define REX_R_RM \
+#define REX_R_RM(r, rm) \
 uint8_t R; \
 do { \
-    if (op[1].tag == OPENASM_OP_MEMORY64) { \
-        R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXR : 0; \
-        R |= (op->aux & OPENASM_AUX_REXB)? OPENASM_PREFIX64_REXB : 0; \
-        R |= (op->aux & OPENASM_AUX_REXX)? OPENASM_PREFIX64_REXX : 0; \
+    if (rm.tag >= OPENASM_OP_MEMORY8 && rm.tag <= OPENASM_OP_MEMORY64) { \
+        R = rm.mem.base.rexr? OPENASM_PREFIX64_REXB : 0; \
+        R |= rm.mem.index.rexr? OPENASM_PREFIX64_REXX : 0; \
     } else { \
-        R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0; \
-        R |= (op->aux & OPENASM_AUX_REXB)? OPENASM_PREFIX64_REXR : 0; \
-        R |= (op->aux & OPENASM_AUX_REXX)? OPENASM_PREFIX64_REXX : 0; \
+        R = rm.reg.rexr? OPENASM_PREFIX64_REXB : 0; \
     } \
+    R |= r.reg.rexr? OPENASM_PREFIX64_REXR : 0; \
+} while (0)
+
+#define REX_R_B(r) \
+uint8_t R; \
+do { \
+    R = r.reg.rexr? OPENASM_PREFIX64_REXB : 0; \
+} while (0)
+
+#define REX_R_R(r) \
+uint8_t R; \
+do { \
+    R = r.reg.rexr? OPENASM_PREFIX64_REXR : 0; \
 } while (0)
 
 int openasm_addlike_al_imm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opcode, uint8_t regval) {
@@ -689,7 +697,7 @@ int openasm_addlike_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -704,7 +712,7 @@ int openasm_addlike_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t o
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -718,7 +726,7 @@ int openasm_addlike_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t o
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -732,7 +740,7 @@ int openasm_addsxlike_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -746,7 +754,7 @@ int openasm_addsxlike_rm16_imm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t 
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -760,7 +768,7 @@ int openasm_addsxlike_rm32_imm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t 
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -774,7 +782,7 @@ int openasm_addsxlike_rm64_imm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t 
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -789,7 +797,7 @@ int openasm_addlike_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opcod
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -804,7 +812,7 @@ int openasm_addlike_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -818,7 +826,7 @@ int openasm_addlike_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -832,7 +840,7 @@ int openasm_addlike_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -846,7 +854,7 @@ int openasm_addlike_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opcod
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -861,7 +869,7 @@ int openasm_addlike_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -875,7 +883,7 @@ int openasm_addlike_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -889,7 +897,7 @@ int openasm_addlike_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
 
@@ -1443,7 +1451,7 @@ int openasm_mullike_al_rm8(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opcod
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, opcode);
     SET_REGISTER_RM(op[0].reg, regval, 8);
@@ -1457,7 +1465,7 @@ int openasm_mullike_ax_rm16(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opco
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
     SET_REGISTER_RM(op[0].reg, regval, 16);
@@ -1470,7 +1478,7 @@ int openasm_mullike_eax_rm32(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, opcode);
     SET_REGISTER_RM(op[0].reg, regval, 32);
@@ -1483,7 +1491,7 @@ int openasm_mullike_rax_rm64(OpenasmBuffer *buf, OpenasmOperand *op, uint8_t opc
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, opcode);
     SET_REGISTER_RM(op[0].reg, regval, 64);
@@ -1564,7 +1572,7 @@ int openasm_mov_rm8_r8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM8_R8);
 
@@ -1578,7 +1586,7 @@ int openasm_mov_rm16_r16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM16_R16);
 
@@ -1591,7 +1599,7 @@ int openasm_mov_rm32_r32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM32_R32);
 
@@ -1604,7 +1612,7 @@ int openasm_mov_rm64_r64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM64_R64);
 
@@ -1617,7 +1625,7 @@ int openasm_mov_r8_rm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R8_RM8);
 
@@ -1631,7 +1639,7 @@ int openasm_mov_r16_rm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R16_RM16);
 
@@ -1644,7 +1652,7 @@ int openasm_mov_r32_rm32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R32_RM32);
 
@@ -1657,7 +1665,7 @@ int openasm_mov_r64_rm64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_R64_RM64);
 
@@ -1670,7 +1678,7 @@ int openasm_mov_r8_imm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     SET_REGISTER_O(op[0].reg, OPENASM_MOV_R8_IMM8, 8);
 
@@ -1683,7 +1691,7 @@ int openasm_mov_r16_imm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     SET_REGISTER_O(op[0].reg, OPENASM_MOV_R16_IMM16, 16);
 
@@ -1695,7 +1703,7 @@ int openasm_mov_r32_imm32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     SET_REGISTER_O(op[0].reg, OPENASM_MOV_R32_IMM32, 32);
 
@@ -1707,7 +1715,7 @@ int openasm_mov_r64_imm64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     SET_REGISTER_O(op[0].reg, OPENASM_MOV_R64_IMM64, 64);
 
@@ -1719,7 +1727,7 @@ int openasm_mov_rm8_imm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REX0 | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM8_IMM8);
     SET_REGISTER_RM(op[0].reg, 0, 8);
@@ -1733,7 +1741,7 @@ int openasm_mov_rm16_imm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *inst = start;
 
     inst = openasm_legacy_prefix(buf, inst, OPENASM_PREFIX3_OP_SIZE);
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM16_IMM16);
     SET_REGISTER_RM(op[0].reg, 0, 16);
@@ -1746,7 +1754,7 @@ int openasm_mov_rm32_imm32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOV_RM32_IMM32);
     SET_REGISTER_RM(op[0].reg, 0, 32);
@@ -1759,7 +1767,7 @@ int openasm_movsx_rm64_imm32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOVSX_RM64_IMM32);
     SET_REGISTER_RM(op[0].reg, 0, 64);
@@ -1773,7 +1781,7 @@ int openasm_movzx_r16_rm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVZX_R16_RM8);
     uint32_t reg = -1;
@@ -1792,7 +1800,7 @@ int openasm_movzx_r32_rm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVZX_R32_RM8);
     uint32_t reg = -1;
@@ -1811,7 +1819,7 @@ int openasm_movzx_r32_rm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVZX_R32_RM16);
     uint32_t reg = -1;
@@ -1830,7 +1838,7 @@ int openasm_movzx_r64_rm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVZX_R64_RM16);
     uint64_t reg = -1;
@@ -1850,7 +1858,7 @@ int openasm_movsx_r16_rm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVSX_R16_RM8);
     uint32_t reg = -1;
@@ -1869,7 +1877,7 @@ int openasm_movsx_r32_rm8(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVSX_R32_RM8);
     uint32_t reg = -1;
@@ -1888,7 +1896,7 @@ int openasm_movsx_r32_rm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVSX_R32_RM16);
     uint32_t reg = -1;
@@ -1907,7 +1915,7 @@ int openasm_movsx_r64_rm16(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode2(buf, inst, OPENASM_MOVSX_R64_RM16);
     uint64_t reg = -1;
@@ -1926,7 +1934,7 @@ int openasm_movsx_r64_rm32(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, OPENASM_MOVSX_R64_RM32);
     uint64_t reg = -1;
@@ -1946,7 +1954,7 @@ int openasm_lea_r64_m64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_R_RM;
+    REX_R_RM(op[0], op[1]);
     inst = openasm_rex_prefix(buf, inst, OPENASM_PREFIX64_REXW | R);
     inst = openasm_opcode1(buf, inst, OPENASM_LEA_R64_M64);
 
@@ -1960,7 +1968,7 @@ int openasm_pop_rm64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_POP_RM64);
     SET_REG_OR_MEM(op[0], 0, OPENASM_OP_MEMORY64, 64);
@@ -1972,7 +1980,7 @@ int openasm_pop_r64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     SET_REGISTER_O(op[0].reg, OPENASM_POP_R64, 64);
 
@@ -1984,7 +1992,7 @@ int openasm_push_rm64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    REX_RM_R;
+    REX_RM_R(op[0], op[1]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     inst = openasm_opcode1(buf, inst, OPENASM_PUSH_RM64);
     SET_REG_OR_MEM(op[0], 0, OPENASM_OP_MEMORY64, 64);
@@ -1996,7 +2004,7 @@ int openasm_push_r64(OpenasmBuffer *buf, OpenasmOperand *op) {
     uint8_t *start = openasm_new(buf);
     uint8_t *inst = start;
 
-    uint8_t R = (op->aux & OPENASM_AUX_REXR)? OPENASM_PREFIX64_REXB : 0;
+    REX_R_B(op[0]);
     if (R) inst = openasm_rex_prefix(buf, inst, R);
     SET_REGISTER_O(op[0].reg, OPENASM_PUSH_R64, 64);
 

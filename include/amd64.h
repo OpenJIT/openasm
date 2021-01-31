@@ -76,18 +76,23 @@ enum {
     OPENASM_AUX_REXX = 0x4,
 };
 
+struct OpenasmReg {
+    const char *reg;
+    int rexw;
+    int rexr;
+};
+
 struct OpenasmMemory {
-    const char *base;
-    const char *index;
+    struct OpenasmReg base;
+    struct OpenasmReg index;
     uint64_t scale;
     int64_t disp;
 };
 
 struct OpenasmOperand {
-    unsigned int tag:4;
-    unsigned int aux:4;
+    unsigned int tag;
     union {
-        const char *reg;
+        struct OpenasmReg reg;
         uint64_t imm;
         struct OpenasmMemory mem;
     };
@@ -106,8 +111,8 @@ struct OpenasmRegister {
 };
 
 /* useful defines */
-#define OPENASM_MAX_SIZE 23
-#define OPENASM_MEM(b, i, s, d) ((struct OpenasmMemory) { .base = b, .index = i, .scale = s, .disp = d })
+#define OPENASM_MAX_SIZE 15
+#define OPENASM_MEM(b, i, s, d) ((struct OpenasmMemory) { .base.reg = b, .index.reg = i, .scale = s, .disp = d })
 #define OPENASM_CONS1(tag) (tag & 0xf)
 #define OPENASM_CONS2(tag1, tag2) (((tag1 & 0xf) << 4) | (tag2 & 0xf))
 
